@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+
+<script>
+
+var isUpKeyDown = false;
+var isDownKeyDown = false;
+
+var myPaddlePos = 100;
+
+const ws = new WebSocket("ws://localhost:8080");
+ws.addEventListener("open", (event) => {
+    ws.binaryType = "arraybuffer";
+});
+
+var tickLoop = setInterval(function() 
+{ 
+    if (isUpKeyDown || isDownKeyDown)
+    {
+        if (isUpKeyDown)
+            myPaddlePos++;
+        if (isDownKeyDown)
+            myPaddlePos--;
+
+        ws.send(JSON.stringify({pos: myPaddlePos}));
+        document.getElementById('myPos').innerHTML = myPaddlePos;
+    }
+}, 10);  // run every 10 milliseconds
+
+document.onkeydown = function(e) {
+    switch(e.which) {
+        case 37: // left
+        break;
+
+        case 38: // up
+        isUpKeyDown = true;
+        break;
+
+        case 39: // right
+        break;
+
+        case 40: // down
+        isDownKeyDown = true;
+        break;
+
+        default: return;
+    }
+    e.preventDefault(); // prevent the default action (scroll / move caret)
+};
+
+document.onkeyup = function(e) {
+    switch(e.which) {
+        case 37: // left
+        break;
+
+        case 38: // up
+        isUpKeyDown = false;
+        break;
+
+        case 39: // right
+        break;
+
+        case 40: // down
+        isDownKeyDown = false;
+        break;
+
+        default: return;
+    }
+    e.preventDefault(); // prevent the default action (scroll / move caret)
+};
+
+
+ws.addEventListener("message", async (event) => {
+    
+    obj = JSON.parse(event.data);
+    if (obj.pos)
+        document.getElementById('partnerPos').innerHTML = obj.pos;
+    if (obj.message)
+    {
+        var chatMessages = document.getElementById('chat-messages');
+        var newMessage = document.createElement('p');
+
+        newMessage.textContent = obj.message;
+        
+        chatMessages.appendChild(newMessage);
+    }
+});
+
+
+function sendMessage() {
+    //console.log(document.getElementById('message-input').value);
+    let msg = document.getElementById('message-input').value;
+    ws.send(JSON.stringify({message: msg}));
+    //ws.send(.toString());
+}
+
+
+
+</script>
+
+<html>
+<body>
+
+
+<p id="myPos">100</p>
+<p id="partnerPos">100</p>
+
+<div id="chat-window">
+    </div>
+    <div id="input-container">
+        <input type="text" id="message-input" placeholder="Type your message">
+        <button id="send-button" onclick="sendMessage()">Send</button>
+    </div>
+
+    <p>Messages Recieved: </p>
+
+    <div id="chat-messages"></div>
+</div>
+
+</body>
+</html> 
+
