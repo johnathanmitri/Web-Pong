@@ -21,7 +21,7 @@ var tickLoop = setInterval(function()
         if (isDownKeyDown)
             myPaddlePos--;
 
-        ws.send(JSON.stringify({pos: myPaddlePos}));
+        ws.send("c" + JSON.stringify({pos: myPaddlePos}));
         document.getElementById('myPos').innerHTML = myPaddlePos;
     }
 }, 10);  // run every 10 milliseconds
@@ -71,7 +71,7 @@ document.onkeyup = function(e) {
 
 ws.addEventListener("message", async (event) => {
     
-    obj = JSON.parse(event.data);
+    obj = JSON.parse(event.data.substring(1));
     if (obj.pos)
         document.getElementById('partnerPos').innerHTML = obj.pos;
     if (obj.message)
@@ -86,10 +86,16 @@ ws.addEventListener("message", async (event) => {
 });
 
 
-function sendMessage() {
+function sendClientMessage() {
     //console.log(document.getElementById('message-input').value);
     let msg = document.getElementById('message-input').value;
-    ws.send(JSON.stringify({message: msg}));
+    ws.send("c" + JSON.stringify({message: msg}));
+    //ws.send(.toString());
+}
+
+function sendServerMessage(msg) {
+    //console.log(document.getElementById('message-input').value);
+    ws.send("s" + JSON.stringify({message: msg}));
     //ws.send(.toString());
 }
 
@@ -108,7 +114,7 @@ function sendMessage() {
     </div>
     <div id="input-container">
         <input type="text" id="message-input" placeholder="Type your message">
-        <button id="send-button" onclick="sendMessage()">Send</button>
+        <button id="send-button" onclick="sendClientMessage()">Send</button>
     </div>
 
     <p>Messages Recieved: </p>
