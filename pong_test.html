@@ -141,6 +141,14 @@
                 ball.resetting = false;
                 ball.x = canvas.width / 2;
                 ball.y = canvas.height / 2;
+                
+                //add randomness factor to ball velocity
+                //TODO: Ball always has downwards vertical velocity when reset - will want to randomize that 
+
+                vertical_directional_scaling = Math.random()*ballSpeed/2 //Larger = More velocity in the vertical component
+                ball.dy = ballSpeed/2 + vertical_directional_scaling; //Vertical velocity 50-100% of normal
+                // ball.dx = ballSpeed/2 + (1-vertical_directional_scaling) //Horizontal velocity is inverse-proportional to change in vertical velocity
+
             }, 400);
         }
 
