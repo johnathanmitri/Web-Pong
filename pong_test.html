@@ -22,21 +22,28 @@
 
 <body>
     <!-- TODO: Dynamic Canvas Sizing -->
-    <canvas width="750" height="585" id="game"></canvas> 
+    <div id="canvas-container">
+    </div>
+    <!-- <canvas width="750" height="585" id="game"></canvas>  -->
 </body>
 
 <!-- Define Basic Pong Elements -->
 <script>
+    //Initialize Canvas proportional to loaded screensize
+        //Scale components by canvas size (relative to default height 996px)
+    canvas_scaling = window.innerHeight/996;
+    const canvas_container = document.getElementById("canvas-container");
+    canvas_container.innerHTML = `<canvas width="${window.innerHeight*1}" height="${window.innerHeight*0.8}" id="game"></canvas> `;
     const canvas = document.getElementById('game');
     const context = canvas.getContext('2d');
 
     //Initialize component attributes
-    const grid = 15;
+    const grid = 15 * canvas_scaling;
     const paddleHeight = grid * 5; // 80
     const maxPaddleY = canvas.height - grid - paddleHeight;
 
-    var paddleSpeed = 6;
-    var ballSpeed = 5;
+    var paddleSpeed = 6 * canvas_scaling;
+    var ballSpeed = 6 * canvas_scaling;
 
     //Initialize Components
     const leftPaddle = {
@@ -77,22 +84,28 @@
 
 <!-- Handle Gameplay Physics Render Loop -->
 <script>
-    last_rendered_timestamp = 0;
+    var last_rendered_timestamp = 0;
+    var left_paddle_collision_this_frame = false;
+    var right_paddle_collision_this_frame = false;
+    const refresh_rate = 60;
     function renderFrame(cur_time) {
         requestAnimationFrame(renderFrame); //prepare render of next frame as soon as next refresh occurs
 
+    //New frame, any existing collision has been resolved already 
+    left_paddle_collision_this_frame = false;
+    right_paddle_collision_this_frame = false;
 
     //Idenfity time scaling factor based on how much time has passed between frames
         //Ideal time between rendering frames should be 16.667ms or 60hz
             //Therefore if the difference between frames is 16.667ms then the scaling factor should = 1
             //If the difference between frames is LESS than 16.667ms, then the scaling factor should be < 1
-        refresh_rate = 60;
         time_since_last_rendered = cur_time - last_rendered_timestamp
         time_scaling = (time_since_last_rendered)/(1000*(1/refresh_rate));
-        console.log("Cur: "+ cur_time + " Prev:" + last_rendered_timestamp + " Diff:" + (time_since_last_rendered));
+        // console.log("Cur: "+ cur_time + " Prev:" + last_rendered_timestamp + " Diff:" + (time_since_last_rendered));
         
         last_rendered_timestamp = cur_time; //update timestamp of last rendered frame (this frame) ((would be more intuitive to put this line of code at the end of this function))
-        console.log(time_scaling);
+        // console.log(time_scaling);
+
 
 
 
@@ -152,9 +165,10 @@
             }, 400);
         }
 
-    //Handle Ball Collision on this frame
+    //Handle Ball-Paddle Collision on this frame
         // check to see if ball collides with paddle. if they do change x velocity
         if (collides(ball, leftPaddle)) {
+            left_paddle_collision_this_frame = true;
             ball.dx *= -1;
 
             // move ball next to the paddle otherwise the collision will happen again
@@ -162,6 +176,7 @@
             ball.x = leftPaddle.x + leftPaddle.width;
         }
         else if (collides(ball, rightPaddle)) {
+            right_paddle_collision_this_frame = true;
             ball.dx *= -1;
 
             // move ball next to the paddle otherwise the collision will happen again
@@ -190,6 +205,9 @@
         for (let i = grid; i < canvas.height - grid; i += grid * 2) {
             context.fillRect(canvas.width / 2 - grid / 2, i, grid, grid);
         }
+
+        local_gamestate = getGamestate();
+        handleExternalGamestate(local_gamestate);
     }
 
     // check for collision between two objects using axis-aligned bounding box (AABB)
@@ -238,6 +256,66 @@
             leftPaddle.dy = 0;
         }
     });
+
+</script>
+
+<!-- Package and Unpack Gamestate for networking purposes -->
+<script>
+    //Gets current state of gameplay elements and puts the information in an object
+    function getGamestate()
+    {
+        gamestate = {
+            //paddle-ball collision occurred 
+            opponent_paddle_ball_collision: left_paddle_collision_this_frame,
+            //paddles y abs position
+            left_paddle_y_pos: leftPaddle.y / canvas_scaling, //divide out canvas scaling so when we are using standardized values (two users with different canvas sizes will recieve/send similar values)
+            right_paddle_y_pos: rightPaddle.y / canvas_scaling,
+            //paddles y abs velocity
+            left_paddle_dy:  leftPaddle.dy / canvas_scaling,
+            right_paddle_dx:  rightPaddle.dy / canvas_scaling,
+            //ball abs position
+            ball_y_pos: ball.y / canvas_scaling,
+            ball_x_pos: ball.x / canvas_scaling,
+            //ball x,y abs velocity
+            ball_dy: ball.dy / canvas_scaling,
+            ball_dx: ball.dx / canvas_scaling
+        }
+
+        return gamestate;
+    }
+
+    //Takes in a gamestate object and compares it to local gamestate
+        //Handles logic of deciding which gamestate will be rendered in the current frame. 
+        //Call this function whenever a new gamestate object arrives from network protocol
+    function handleExternalGamestate(external_gamestate)
+    {
+        //Only modify state of ball when a collision has occurred from opponent
+            //otherwise, render game logic as normal, but always update opponents paddle
+            //TODO: Only check opponents side for collisions, not both sides
+                //requires determining which side the opponent (and which side is local player)
+        if (external_gamestate.opponent_paddle_ball_collision == true)
+        {
+            console.log("(opposing) collision occurred, render based on opponents gamestate");
+            
+        //Modify local gamestate to match incoming gamestate from opponent
+        //(Remember to scale by local canvas size)
+            //Ball
+            ball.x = (external_gamestate.ball_x_pos + 50)* canvas_scaling; 
+            ball.y = external_gamestate.ball_y_pos * canvas_scaling;
+            ball.dx = external_gamestate.ball_dx * canvas_scaling;
+            ball.dy = external_gamestate.ball_dy * canvas_scaling;
+
+        }
+        else{
+            console.log("retain gamestate, but update paddle always");
+        }
+
+        //(Opponents) Paddle
+            //(In this case we will pretend the opponent is the left paddle)
+        leftPaddle.y = external_gamestate.left_paddle_y_pos * canvas_scaling;
+        left_paddle_dy = external_gamestate.left_paddle_dy * canvas_scaling;
+    }
+
 
 </script>
 
