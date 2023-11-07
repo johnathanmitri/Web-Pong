@@ -83,6 +83,10 @@ ws.addEventListener("message", async (event) => {
         
         chatMessages.appendChild(newMessage);
     }
+    if (obj.gamestate)
+    {
+        obj.gamestate
+    }
 });
 
 
@@ -92,6 +96,13 @@ function sendClientMessage() {
     ws.send("c" + JSON.stringify({message: msg}));
     //ws.send(.toString());
 }
+
+function sendGameState(gamestate)
+{
+    ws.send("c" + JSON.stringify({"gamestate": gamestate}))
+}
+
+
 
 function sendServerMessage(msg) {
     //console.log(document.getElementById('message-input').value);

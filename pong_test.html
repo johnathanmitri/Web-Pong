@@ -46,7 +46,7 @@
     var ballSpeed = 6 * canvas_scaling; // 6 is default
 
     //Gamestate Flags
-    var player_number = 0;
+    var player_number = -1;
     var ball_in_localplayer_court = false;
     var localplayer_paddle_collision_this_frame = false;
     var opponent_scored = false;
@@ -75,6 +75,9 @@
         // paddle velocity
         dy: 0
     };
+
+    var myPaddle = null;
+
     const ball = {
         // start in the middle of the game
         x: canvas.width / 2,
@@ -109,6 +112,8 @@
     }
 
     function renderFrame(cur_time) {
+        if (player_number == -1)
+            return;
         requestAnimationFrame(renderFrame); //prepare render of next frame as soon as next refresh occurs
         
     //New frame, any existing collision or scores has been resolved already 
@@ -127,11 +132,23 @@
         // console.log(time_scaling);
 
     //Compute Physics for Local Player Only
+
+        myPaddle.y += myPaddle.dy * time_scaling;
+
+        // prevent paddles from going through walls
+        if (myPaddle.y < grid) {
+            myPaddle.y = grid;
+        }
+        else if (myPaddle.y > maxPaddleY) {
+            myPaddle.y = maxPaddleY;
+        }
+
+
         if (player_number == 0) //left side player
         {
         //Handle Paddle Movement
             // move paddles by their velocity
-            leftPaddle.y += leftPaddle.dy * time_scaling;
+            /*leftPaddle.y += leftPaddle.dy * time_scaling;
 
             // prevent paddles from going through walls
             if (leftPaddle.y < grid) {
@@ -139,7 +156,7 @@
             }
             else if (leftPaddle.y > maxPaddleY) {
                 leftPaddle.y = maxPaddleY;
-            }
+            }*/
 
 
         //Handle Ball-Paddle Collision on this frame
@@ -157,7 +174,7 @@
         {
         //Handle Paddle Movement
             // move paddles by their velocity
-            rightPaddle.y += rightPaddle.dy * time_scaling;
+            /*rightPaddle.y += rightPaddle.dy * time_scaling;
 
             // prevent paddles from going through walls
             if (rightPaddle.y < grid) {
@@ -165,7 +182,7 @@
             }
             else if (rightPaddle.y > maxPaddleY) {
                 rightPaddle.y = maxPaddleY;
-            }
+            }*/
 
 
         //Handle Ball-Paddle Collision on this frame
@@ -245,7 +262,7 @@
 
         // draw dotted line down the middle
         for (let i = grid; i < canvas.height - grid; i += grid * 2) {
-            context.fillRect(canvas.width / 2 - grid / 2, i, grid, grid);
+            context.fillRect(canvas.width / 2 - grid / 4, i, grid/2, grid);
         }
 
 
@@ -276,29 +293,29 @@
     // Set Paddle Velocity > 0 if a key is pressed
     document.addEventListener('keydown', function (e) {
         //Player 0 controls left paddle
-        if (player_number == 0)
-        {
+        //if (player_number == 0)
+        //{
             // up arrow key
             if (e.which === 38) {
-                leftPaddle.dy = -paddleSpeed;
+                myPaddle.dy = -paddleSpeed;
             }
             // down arrow key
             else if (e.which === 40) {
-                leftPaddle.dy = paddleSpeed;
+                myPaddle.dy = paddleSpeed;
             }
 
             // w key
             if (e.which === 87) {
-                leftPaddle.dy = -paddleSpeed;
+                myPaddle.dy = -paddleSpeed;
             }
             // a key
             else if (e.which === 83) {
-                leftPaddle.dy = paddleSpeed;
+                myPaddle.dy = paddleSpeed;
             }
-        }
+        //}
 
         //Player 1 controls right paddle
-        else 
+        /*else 
         {
                         // up arrow key
             if (e.which === 38) {
@@ -317,25 +334,25 @@
             else if (e.which === 83) {
                 rightPaddle.dy = paddleSpeed;
             }
-        }
+        }*/
     });
 
     // Set Paddle Velocity == 0 if pressed key is letgo
     document.addEventListener('keyup', function (e) {
         //Player 0 controls left paddle
-        if (player_number == 0)
-        {
+        //if (player_number == 0)
+        //{
             if (e.which === 38 || e.which === 40 || e.which === 83 || e.which === 87) {
-                leftPaddle.dy = 0;
+                myPaddle.dy = 0;
             }
-        }
+        //}
         //Player 1 controls right paddle
-        else 
+        /*else 
         {
             if (e.which === 38 || e.which === 40 || e.which === 83 || e.which === 87) {
                 rightPaddle.dy = 0;
             }
-        }
+        }*/
     });
 
 </script>
@@ -450,7 +467,7 @@
 
 <!-- WEBSOCKET MESSAGE HANDLING -->
 <script>
-    var fake_lag = 30; //(20 frames of fake latency between opponents)
+    var fake_lag = 0;//30; //(20 frames of fake latency between opponents)
     var gamestate_lag_queue = [];
 
 
@@ -483,13 +500,21 @@
             player_number = message_obj["body"]["player_num"]
             if (player_number == 1){ //ball starts off going to right side
                 ball_in_localplayer_court = true;
+
+                myPaddle = rightPaddle; // player 1 gets right paddle
+            }
+            else {
+                myPaddle = leftPaddle; // player 0 gets left paddle
             }
                 
             // start the game now
             requestAnimationFrame(renderFrame);
         }
-
-
+        else if (message_obj["trigger"] == "opponent_disconnected"){
+            console.log("opponent disconnected");
+            console.log(message_obj);
+            player_number = -1;
+        }
         
     });
     
