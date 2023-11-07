@@ -39,11 +39,20 @@
 
     //Initialize component attributes
     const grid = 15 * canvas_scaling;
-    const paddleHeight = grid * 5; // 80
+    const paddleHeight = grid * 30; // 5 is default 
     const maxPaddleY = canvas.height - grid - paddleHeight;
 
-    var paddleSpeed = 6 * canvas_scaling;
-    var ballSpeed = 6 * canvas_scaling;
+    var paddleSpeed = 6 * canvas_scaling; // 6 is default
+    var ballSpeed = 6 * canvas_scaling; // 6 is default
+
+    //Gamestate Flags
+    var player_number = 0;
+    var ball_in_localplayer_court = false;
+    var localplayer_paddle_collision_this_frame = false;
+    var opponent_scored = false;
+
+    //Information about gameplay elements from opponent(s)
+    var most_recent_external_gamestate = null;
 
     //Initialize Components
     const leftPaddle = {
@@ -84,16 +93,27 @@
 
 <!-- Handle Gameplay Physics Render Loop -->
 <script>
+
+
+
     var last_rendered_timestamp = 0;
-    var left_paddle_collision_this_frame = false;
-    var right_paddle_collision_this_frame = false;
     const refresh_rate = 60;
+
+    // check for collision between two objects using axis-aligned bounding box (AABB)
+    // @see https://developer.mozilla.org/en-US/docs/Games/Techniques/2D_collision_detection
+    function collides(obj1, obj2) {
+        return obj1.x < obj2.x + obj2.width &&
+            obj1.x + obj1.width > obj2.x &&
+            obj1.y < obj2.y + obj2.height &&
+            obj1.y + obj1.height > obj2.y;
+    }
+
     function renderFrame(cur_time) {
         requestAnimationFrame(renderFrame); //prepare render of next frame as soon as next refresh occurs
-
-    //New frame, any existing collision has been resolved already 
-    left_paddle_collision_this_frame = false;
-    right_paddle_collision_this_frame = false;
+        
+    //New frame, any existing collision or scores has been resolved already 
+        localplayer_paddle_collision_this_frame = false;
+        opponent_scored = false;
 
     //Idenfity time scaling factor based on how much time has passed between frames
         //Ideal time between rendering frames should be 16.667ms or 60hz
@@ -106,28 +126,60 @@
         last_rendered_timestamp = cur_time; //update timestamp of last rendered frame (this frame) ((would be more intuitive to put this line of code at the end of this function))
         // console.log(time_scaling);
 
+    //Compute Physics for Local Player Only
+        if (player_number == 0) //left side player
+        {
+        //Handle Paddle Movement
+            // move paddles by their velocity
+            leftPaddle.y += leftPaddle.dy * time_scaling;
+
+            // prevent paddles from going through walls
+            if (leftPaddle.y < grid) {
+                leftPaddle.y = grid;
+            }
+            else if (leftPaddle.y > maxPaddleY) {
+                leftPaddle.y = maxPaddleY;
+            }
 
 
+        //Handle Ball-Paddle Collision on this frame
+            // check to see if ball collides with paddle. if they do change x velocity
+            if (collides(ball, leftPaddle)) {
+                localplayer_paddle_collision_this_frame = true;
+                ball.dx *= -1;
 
-    //Handle Paddle Movement
-        // move paddles by their velocity
-        leftPaddle.y += leftPaddle.dy * time_scaling;
-        rightPaddle.y += rightPaddle.dy * time_scaling;
-
-        // prevent paddles from going through walls
-        if (leftPaddle.y < grid) {
-            leftPaddle.y = grid;
+                // move ball next to the paddle otherwise the collision will happen again
+                // in the next frame
+                ball.x = leftPaddle.x + leftPaddle.width;
+            }
         }
-        else if (leftPaddle.y > maxPaddleY) {
-            leftPaddle.y = maxPaddleY;
-        }
+        else if (player_number == 1) //right side player
+        {
+        //Handle Paddle Movement
+            // move paddles by their velocity
+            rightPaddle.y += rightPaddle.dy * time_scaling;
 
-        if (rightPaddle.y < grid) {
-            rightPaddle.y = grid;
+            // prevent paddles from going through walls
+            if (rightPaddle.y < grid) {
+                rightPaddle.y = grid;
+            }
+            else if (rightPaddle.y > maxPaddleY) {
+                rightPaddle.y = maxPaddleY;
+            }
+
+
+        //Handle Ball-Paddle Collision on this frame
+            // check to see if ball collides with paddle. if they do change x velocity
+            if (collides(ball, rightPaddle)) {
+                localplayer_paddle_collision_this_frame = true;
+                ball.dx *= -1;
+
+                // move ball next to the paddle otherwise the collision will happen again
+                // in the next frame
+                ball.x = rightPaddle.x - rightPaddle.width;
+            }
         }
-        else if (rightPaddle.y > maxPaddleY) {
-            rightPaddle.y = maxPaddleY;
-        }
+        
 
     //Handle Ball Movement
         // move ball by its velocity 
@@ -146,42 +198,32 @@
         }
 
         // reset ball if it goes past paddle (but only if we haven't already done so)
-        if ((ball.x < 0 || ball.x > canvas.width) && !ball.resetting) {
+            //Also ensure that we are the ones in control of the ball (otherwise it is the opponents job to reset if they got scored on)
+        if ((ball.x < 0 || ball.x > canvas.width) && !ball.resetting && ball_in_localplayer_court) {
             ball.resetting = true;
 
-            // give some time for the player to recover before launching the ball again
             setTimeout(() => {
                 ball.resetting = false;
+
+                //Determine new ball trajectory
                 ball.x = canvas.width / 2;
                 ball.y = canvas.height / 2;
-                
                 //add randomness factor to ball velocity
                 //TODO: Ball always has downwards vertical velocity when reset - will want to randomize that 
-
-                vertical_directional_scaling = Math.random()*ballSpeed/2 //Larger = More velocity in the vertical component
-                ball.dy = ballSpeed/2 + vertical_directional_scaling; //Vertical velocity 50-100% of normal
+                // vertical_directional_scaling = Math.random()*ballSpeed/2 //Larger = More velocity in the vertical component
+                // ball.dy = ballSpeed/2 + vertical_directional_scaling; //Vertical velocity 50-100% of normal
                 // ball.dx = ballSpeed/2 + (1-vertical_directional_scaling) //Horizontal velocity is inverse-proportional to change in vertical velocity
 
-            }, 400);
-        }
+                //Let opponent knows to update ball position from our input
+                console.log("ball resettiing");
+                opponent_scored = true;
+                local_gamestate = getGamestate(player_number);
+                sendClientMessage({
+                    "trigger": "external_gamestate",
+                    "body": local_gamestate
+                });
 
-    //Handle Ball-Paddle Collision on this frame
-        // check to see if ball collides with paddle. if they do change x velocity
-        if (collides(ball, leftPaddle)) {
-            left_paddle_collision_this_frame = true;
-            ball.dx *= -1;
-
-            // move ball next to the paddle otherwise the collision will happen again
-            // in the next frame
-            ball.x = leftPaddle.x + leftPaddle.width;
-        }
-        else if (collides(ball, rightPaddle)) {
-            right_paddle_collision_this_frame = true;
-            ball.dx *= -1;
-
-            // move ball next to the paddle otherwise the collision will happen again
-            // in the next frame
-            ball.x = rightPaddle.x - ball.width;
+            }, 500);
         }
 
 
@@ -206,54 +248,93 @@
             context.fillRect(canvas.width / 2 - grid / 2, i, grid, grid);
         }
 
-        local_gamestate = getGamestate();
-        handleExternalGamestate(local_gamestate);
+
+    //Send local updates (gamestate to opponent)
+        local_gamestate = getGamestate(player_number);
+        sendClientMessage({
+            "trigger": "external_gamestate",
+            "body": local_gamestate
+        });
+                    
+
+    //Handle external gamestate (gamestate from opponent)
+        if (most_recent_external_gamestate != null){  //if are hitting the ball, ignore what the opponent is telling us. 
+            handleExternalGamestate(most_recent_external_gamestate);
+            most_recent_external_gamestate = null; 
+        }
+
+        if (localplayer_paddle_collision_this_frame) {
+                ball_in_localplayer_court = false; //we just hit the ball, pass off ball control to opponent
+        }
     }
 
-    // check for collision between two objects using axis-aligned bounding box (AABB)
-    // @see https://developer.mozilla.org/en-US/docs/Games/Techniques/2D_collision_detection
-    function collides(obj1, obj2) {
-        return obj1.x < obj2.x + obj2.width &&
-            obj1.x + obj1.width > obj2.x &&
-            obj1.y < obj2.y + obj2.height &&
-            obj1.y + obj1.height > obj2.y;
-    }
 
-    // start the game
-    requestAnimationFrame(renderFrame);
 </script>
 
 <!-- Handle User Input -->
 <script>
     // Set Paddle Velocity > 0 if a key is pressed
     document.addEventListener('keydown', function (e) {
-        // up arrow key
-        if (e.which === 38) {
-            rightPaddle.dy = -paddleSpeed;
-        }
-        // down arrow key
-        else if (e.which === 40) {
-            rightPaddle.dy = paddleSpeed;
+        //Player 0 controls left paddle
+        if (player_number == 0)
+        {
+            // up arrow key
+            if (e.which === 38) {
+                leftPaddle.dy = -paddleSpeed;
+            }
+            // down arrow key
+            else if (e.which === 40) {
+                leftPaddle.dy = paddleSpeed;
+            }
+
+            // w key
+            if (e.which === 87) {
+                leftPaddle.dy = -paddleSpeed;
+            }
+            // a key
+            else if (e.which === 83) {
+                leftPaddle.dy = paddleSpeed;
+            }
         }
 
-        // w key
-        if (e.which === 87) {
-            leftPaddle.dy = -paddleSpeed;
-        }
-        // a key
-        else if (e.which === 83) {
-            leftPaddle.dy = paddleSpeed;
+        //Player 1 controls right paddle
+        else 
+        {
+                        // up arrow key
+            if (e.which === 38) {
+                rightPaddle.dy = -paddleSpeed;
+            }
+            // down arrow key
+            else if (e.which === 40) {
+                rightPaddle.dy = paddleSpeed;
+            }
+
+            // w key
+            if (e.which === 87) {
+                rightPaddle.dy = -paddleSpeed;
+            }
+            // a key
+            else if (e.which === 83) {
+                rightPaddle.dy = paddleSpeed;
+            }
         }
     });
 
     // Set Paddle Velocity == 0 if pressed key is letgo
     document.addEventListener('keyup', function (e) {
-        if (e.which === 38 || e.which === 40) {
-            rightPaddle.dy = 0;
+        //Player 0 controls left paddle
+        if (player_number == 0)
+        {
+            if (e.which === 38 || e.which === 40 || e.which === 83 || e.which === 87) {
+                leftPaddle.dy = 0;
+            }
         }
-
-        if (e.which === 83 || e.which === 87) {
-            leftPaddle.dy = 0;
+        //Player 1 controls right paddle
+        else 
+        {
+            if (e.which === 38 || e.which === 40 || e.which === 83 || e.which === 87) {
+                rightPaddle.dy = 0;
+            }
         }
     });
 
@@ -261,25 +342,51 @@
 
 <!-- Package and Unpack Gamestate for networking purposes -->
 <script>
-    //Gets current state of gameplay elements and puts the information in an object
-    function getGamestate()
+    //Gets current state of gameplay elements (local to player) and puts the information in an object
+    function getGamestate(player_num)
     {
-        gamestate = {
-            //paddle-ball collision occurred 
-            opponent_paddle_ball_collision: left_paddle_collision_this_frame,
-            //paddles y abs position
-            left_paddle_y_pos: leftPaddle.y / canvas_scaling, //divide out canvas scaling so when we are using standardized values (two users with different canvas sizes will recieve/send similar values)
-            right_paddle_y_pos: rightPaddle.y / canvas_scaling,
-            //paddles y abs velocity
-            left_paddle_dy:  leftPaddle.dy / canvas_scaling,
-            right_paddle_dx:  rightPaddle.dy / canvas_scaling,
-            //ball abs position
-            ball_y_pos: ball.y / canvas_scaling,
-            ball_x_pos: ball.x / canvas_scaling,
-            //ball x,y abs velocity
-            ball_dy: ball.dy / canvas_scaling,
-            ball_dx: ball.dx / canvas_scaling
-        }
+        switch(player_num) {
+            case 0:
+                gamestate = {
+                    //paddle-ball collision occurred 
+                    opponent_paddle_ball_collision: localplayer_paddle_collision_this_frame, //opponent will see this local collision as collision from *their* opponent 
+                    //local player paddle y abs position
+                    left_paddle_y_pos: leftPaddle.y / canvas_scaling, //divide out canvas scaling so when we are using standardized values (two users with different canvas sizes will recieve/send similar values)
+                    //local player paddle y abs position
+                    left_paddle_dy:  leftPaddle.dy / canvas_scaling,
+                    //ball abs position
+                    ball_y_pos: ball.y / canvas_scaling,
+                    ball_x_pos: ball.x / canvas_scaling,
+                    //ball x,y abs velocity
+                    ball_dy: ball.dy / canvas_scaling,
+                    ball_dx: ball.dx / canvas_scaling,
+                    //scoring event
+                    local_scored : opponent_scored
+                }
+                break;
+            case 1:
+                gamestate = {
+                    //paddle-ball collision occurred 
+                    opponent_paddle_ball_collision: localplayer_paddle_collision_this_frame, //opponent will see this local collision as collision from *their* opponent 
+                    //local player paddle y abs position
+                    right_paddle_y_pos: rightPaddle.y / canvas_scaling,
+                    //local player paddle y abs position
+                    right_paddle_dx:  rightPaddle.dy / canvas_scaling,
+                    //ball abs position
+                    ball_y_pos: ball.y / canvas_scaling,
+                    ball_x_pos: ball.x / canvas_scaling,
+                    //ball x,y abs velocity
+                    ball_dy: ball.dy / canvas_scaling,
+                    ball_dx: ball.dx / canvas_scaling,
+                    //scoring event
+                    local_scored : opponent_scored
+                }
+                break;
+            default:
+                console.log("Unknown player #, cannot get gamestate")
+                return null;
+            }
+
 
         return gamestate;
     }
@@ -289,7 +396,7 @@
         //Call this function whenever a new gamestate object arrives from network protocol
     function handleExternalGamestate(external_gamestate)
     {
-        //Only modify state of ball when a collision has occurred from opponent
+        //Only modify state of ball when a collision has occurred from opponent or ball is resetting on opponents side due to scoring on them
             //otherwise, render game logic as normal, but always update opponents paddle
             //TODO: Only check opponents side for collisions, not both sides
                 //requires determining which side the opponent (and which side is local player)
@@ -300,23 +407,108 @@
         //Modify local gamestate to match incoming gamestate from opponent
         //(Remember to scale by local canvas size)
             //Ball
-            ball.x = (external_gamestate.ball_x_pos + 50)* canvas_scaling; 
+            ball.x = (external_gamestate.ball_x_pos) * canvas_scaling; 
             ball.y = external_gamestate.ball_y_pos * canvas_scaling;
             ball.dx = external_gamestate.ball_dx * canvas_scaling;
             ball.dy = external_gamestate.ball_dy * canvas_scaling;
-
+            ball_in_localplayer_court = true; // Opponent hit ball towards local player
+        }
+        else if (external_gamestate.local_scored == true)
+        {
+            console.log("we scored against opponent, render based on opponent's ball reset position; they still have control of ball");
+            
+        //Modify local gamestate to match incoming gamestate from opponent
+        //(Remember to scale by local canvas size)
+            //Ball
+            ball.x = (external_gamestate.ball_x_pos) * canvas_scaling;  
+            ball.y = external_gamestate.ball_y_pos * canvas_scaling;
+            ball.dx = external_gamestate.ball_dx * canvas_scaling;
+            ball.dy = external_gamestate.ball_dy * canvas_scaling;
+            ball_in_localplayer_court = false; //Opponent still has ball
         }
         else{
             console.log("retain gamestate, but update paddle always");
         }
 
         //(Opponents) Paddle
-            //(In this case we will pretend the opponent is the left paddle)
-        leftPaddle.y = external_gamestate.left_paddle_y_pos * canvas_scaling;
-        left_paddle_dy = external_gamestate.left_paddle_dy * canvas_scaling;
+        if (player_number == 0) //opponent is p1, their side is right
+        {
+            rightPaddle.y = (external_gamestate.right_paddle_y_pos) * canvas_scaling;
+            right_paddle_dy = external_gamestate.right_paddle_dy * canvas_scaling;
+        }
+        else //opponent is p0, their side is left
+        {
+            leftPaddle.y = (external_gamestate.left_paddle_y_pos) * canvas_scaling;
+            left_paddle_dy = external_gamestate.left_paddle_dy * canvas_scaling;
+        }
+
     }
 
 
 </script>
+
+
+<!-- WEBSOCKET MESSAGE HANDLING -->
+<script>
+    var fake_lag = 30; //(20 frames of fake latency between opponents)
+    var gamestate_lag_queue = [];
+
+
+    const ws = new WebSocket("ws://localhost:8080");
+    ws.addEventListener("open", (event) => {
+        ws.binaryType = "arraybuffer";
+    });
+    
+//Listening for messages coming through this websocket
+    ws.addEventListener("message", async (event) => {
+        // message_raw = event.data;
+        // console.log(message_raw);
+        message_obj = JSON.parse(event.data.substring(1)); 
+        
+        
+        //If message is from opponents newest gamestate
+        if (message_obj["trigger"] == "external_gamestate")
+        {
+            gamestate_lag_queue.push(message_obj["body"]);
+            if (gamestate_lag_queue.length >= fake_lag){
+                most_recent_external_gamestate = gamestate_lag_queue.shift();
+            }
+            // console.log(message_obj["body"]);
+            // most_recent_external_gamestate = message_obj["body"]
+        }
+        //If message is connection established
+        else if (message_obj["trigger"] == "connection_established"){
+            console.log("connection established");
+            console.log(message_obj);
+            player_number = message_obj["body"]["player_num"]
+            if (player_number == 1){ //ball starts off going to right side
+                ball_in_localplayer_court = true;
+            }
+                
+            // start the game now
+            requestAnimationFrame(renderFrame);
+        }
+
+
+        
+    });
+    
+    
+//Functions for sending messages to websocket
+    //Call if data needs to be sent to connected client
+    function sendClientMessage(msg) {
+        //console.log(document.getElementById('message-input').value);
+        ws.send("c" + JSON.stringify(msg));
+        //ws.send(.toString());
+    }
+    
+    //Call if data needs to be sent to server
+    function sendServerMessage(msg) {
+        //console.log(document.getElementById('message-input').value);
+        ws.send("s" + JSON.stringify({message: msg}));
+        //ws.send(.toString());
+    }
+</script>
+    
 
 </html>

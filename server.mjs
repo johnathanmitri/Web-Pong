@@ -49,8 +49,37 @@ server.on('connection', function connection(ws)
 
 
 		latestClient = null;
-		//ws.send("You have been paired.");
-		//latestClient.send("You have been paired.");
+
+		//Set player position (left or right paddle)
+		client.send("c" + JSON.stringify( // "c" => message for client
+											/*
+											This is a vestigial component of passing messages through the server as a middle man
+											It is meant to reduce strain on server computation by only checking first character of the string and then making a decision on what to do with the content
+											
+											In this case we could omit the character (leave it blank)
+											but it is retained for consistency (server always send this extra character out to the clients)
+											*/
+			{
+				"trigger": "connection_established",
+				"message": "You are left paddle (P1)",
+				"body": {
+					"player_num": 0
+				}
+			}
+		));
+		client.partner.send("c" + JSON.stringify(
+			{
+				"trigger": "connection_established",
+				"message": "You are right paddle (P2)",
+				"body":{ 
+					"player_num": 1
+				}
+			}
+		));
+
+
+		// ws.send("You have been paired.");
+		// latestClient.send("You have been paired.");
 		//latestClient = null;
 	}
 	//clients.set(ws);
