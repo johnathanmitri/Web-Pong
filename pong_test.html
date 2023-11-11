@@ -455,8 +455,8 @@
         }
         else //opponent is p0, their side is left
         {
-
-            
+            leftPaddle.yPos = (external_gamestate.left_paddle_y_pos) * canvas_scaling;
+            left_paddle_y_vel = external_gamestate.left_paddle_y_vel * canvas_scaling;
         }
 
         //TODO: HANDLE SCORING EVENT HERE
