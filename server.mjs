@@ -13,7 +13,7 @@ class Client {
 		//this.lookingForGame = 
 		this.partner = null;
 	}
-
+	
 	send(msg)
 	{
 		this.ws.send(msg);
@@ -27,18 +27,10 @@ class Client {
 
 const clients = new Set();
 
-
-
 var latestClient = null;
 
-server.on('connection', function connection(ws) 
+function queuePlayer(client) // client is the player who is requesting to be paired
 {
-	console.log("New client connected.")
-
-	var client = new Client(ws);
-
-	clients.add(ws);
-	//ws.send("Hello from the server.");
 	if (latestClient == null)
 		latestClient = client;
 	else {
@@ -52,7 +44,7 @@ server.on('connection', function connection(ws)
 
 		//Set player position (left or right paddle)
 		client.send("s" + JSON.stringify( // "s" => message comes from server, not other client.
-										  // this allows the client to know that the server is deliberately sending it a message, and not just forwarding the other client message
+			// this allows the client to know that the server is deliberately sending it a message, and not just forwarding the other client message
 			{
 				"trigger": "connection_established",
 				"message": "You are left paddle (P1)",
@@ -65,7 +57,7 @@ server.on('connection', function connection(ws)
 			{
 				"trigger": "connection_established",
 				"message": "You are right paddle (P2)",
-				"body":{ 
+				"body": {
 					"player_num": 1
 				}
 			}
@@ -76,6 +68,19 @@ server.on('connection', function connection(ws)
 		// latestClient.send("You have been paired.");
 		//latestClient = null;
 	}
+}
+
+
+
+server.on('connection', function connection(ws) 
+{
+	console.log("New client connected.")
+
+	var client = new Client(ws);
+
+	clients.add(ws);
+	//ws.send("Hello from the server.");
+	
 	//clients.set(ws);
 
 	function closeOrError(error)
@@ -97,10 +102,9 @@ server.on('connection', function connection(ws)
 				/*"body": {
 					"player_num": 0
 				}*/
-			}
-		));
+			}));
 			client.partner.partner = null;
-			latestClient = client.partner;
+			//latestClient = client.partner;
 		}
 		else if (latestClient == client)
 		{
@@ -121,16 +125,23 @@ server.on('connection', function connection(ws)
 				client.partner.send(str);
 
 		}
-			//partners.get(ws).send(str); // just forward the data to its partner. For some reason. it breaks if toString() isnt run. 
 		else
 		{ // this message is for the server.
-			console.log("We were sent a message: " + str.substring(1));
+			let msg = str.substring(1);
+			console.log("We were sent a message: " + msg);
+
+			let messageObj = JSON.parse(msg);
+
+			if (messageObj["trigger"] == "find_opponent")
+			{
+				queuePlayer(client);
+			}
+			
 		}
 		//console.log(data);
 	});
-
-
 });
+
 
 const rl = readline.createInterface({
 	input: process.stdin,
