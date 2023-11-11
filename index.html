@@ -300,14 +300,6 @@
             "body": local_gamestate
         });
 
-                    
-
-    //Handle external gamestate (gamestate from opponent)
-        if (most_recent_external_gamestate != null){ 
-            handleExternalGamestate(most_recent_external_gamestate);
-            most_recent_external_gamestate = null;
-        }
-
         if (localplayer_paddle_collision_this_frame) {
             ball_in_localplayer_court = false; //we just hit the ball, pass off ball control to opponent
         }
@@ -465,12 +457,6 @@
             console.log("We just scored on opponent; (track our score)");
         }
 
-        //TODO: HANDLE SCORING EVENT HERE
-        if (external_gamestate.local_scored){ 
-                                              //Triggered whenenever we score, not when we get scored on 
-            console.log("We just scored on opponent; (track our score)");
-        }
-
     }
 
 
@@ -508,7 +494,12 @@
             if (message_obj["debug_message"]){
                 console.log(message_obj["debug_message"]);
             }
-            // most_recent_external_gamestate = message_obj["body"]
+
+        //Handle external gamestate (gamestate from opponent)
+            if (most_recent_external_gamestate != null){ 
+                handleExternalGamestate(most_recent_external_gamestate);
+                most_recent_external_gamestate = null;
+            }
         }
         //If message is connection established
         else if (message_obj["trigger"] == "connection_established") {
