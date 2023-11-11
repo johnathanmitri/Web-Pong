@@ -51,14 +51,8 @@ server.on('connection', function connection(ws)
 		latestClient = null;
 
 		//Set player position (left or right paddle)
-		client.send("c" + JSON.stringify( // "c" => message for client
-											/*
-											This is a vestigial component of passing messages through the server as a middle man
-											It is meant to reduce strain on server computation by only checking first character of the string and then making a decision on what to do with the content
-											
-											In this case we could omit the character (leave it blank)
-											but it is retained for consistency (server always send this extra character out to the clients)
-											*/
+		client.send("s" + JSON.stringify( // "s" => message comes from server, not other client.
+										  // this allows the client to know that the server is deliberately sending it a message, and not just forwarding the other client message
 			{
 				"trigger": "connection_established",
 				"message": "You are left paddle (P1)",
@@ -67,7 +61,7 @@ server.on('connection', function connection(ws)
 				}
 			}
 		));
-		client.partner.send("c" + JSON.stringify(
+		client.partner.send("s" + JSON.stringify(
 			{
 				"trigger": "connection_established",
 				"message": "You are right paddle (P2)",
@@ -96,6 +90,15 @@ server.on('connection', function connection(ws)
 
 			//partners.delete(ws);
 			//partners.delete(partner);
+			client.partner.send("s" + JSON.stringify( // "s" => message comes from server, not other client.
+			{
+				"trigger": "opponent_disconnected",
+				"message": "Your opponent has disconnected",
+				/*"body": {
+					"player_num": 0
+				}*/
+			}
+		));
 			client.partner.partner = null;
 			latestClient = client.partner;
 		}
@@ -113,7 +116,11 @@ server.on('connection', function connection(ws)
 	{
 		let str = data.toString();
 		if (str.charAt(0) == "c")
-			client.partner.send(str);
+		{
+			if (client.partner)
+				client.partner.send(str);
+
+		}
 			//partners.get(ws).send(str); // just forward the data to its partner. For some reason. it breaks if toString() isnt run. 
 		else
 		{ // this message is for the server.
