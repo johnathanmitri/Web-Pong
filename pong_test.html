@@ -14,6 +14,27 @@
             align-items: center;
             justify-content: center;
         }
+        #modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 20px;
+            background-color: white;
+            border: 1px solid #ccc;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        #modal button {
+            padding: 10px 20px;
+            background-color: rgb(71, 71, 71);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
     </style>
 </head>
 
@@ -21,11 +42,35 @@
     <!-- TODO: Dynamic Canvas Sizing -->
     <div id="canvas-container">
     </div>
+
+    <div id="modal">
+        <p id="opponentMessage" style="display:none">Your opponent has disconnected!</p>
+        <button id="findOpponentBtn" onclick="findOpponent()">Find New Opponent</button>
+        <h2 style="font-family: 'Arial', sans-serif;" id="searchingMsg"> Searching for Opponent...</h2>
+    </div>
+    
 </body>
 
 <!-- Define Basic Pong Elements -->
 <script>
+    function openModal() {
+        document.getElementById("modal").style.display = "block";
+        document.getElementById("findOpponentBtn").style.display = "initial";
+        document.getElementById("opponentMessage").style.display = "block";
+        document.getElementById("searchingMsg").style.display = "none";
+    }
+    function findOpponent() {
+        document.getElementById("modal").style.display = "block";
+        document.getElementById("findOpponentBtn").style.display = "none";
+        document.getElementById("searchingMsg").style.display = "initial";
 
+        sendServerMessage({
+            "trigger": "find_opponent"
+        });
+    }
+    function foundOpponent() {
+        document.getElementById("modal").style.display = "none";
+    }
     const Key = {
         UP: 38,
         DOWN: 40,
@@ -36,8 +81,6 @@
         S: 83,
         D: 68
     };
-
-
 
     //Initialize Canvas proportional to loaded screensize
     //Scale components by canvas size (relative to default height 996px)
@@ -387,6 +430,7 @@
     const ws = new WebSocket("ws://localhost:8080");
     ws.addEventListener("open", (event) => {
         ws.binaryType = "arraybuffer";
+        findOpponent();
     });
 
     //Listening for messages coming through this websocket
@@ -407,6 +451,7 @@
         }
         //If message is connection established
         else if (message_obj["trigger"] == "connection_established") {
+            foundOpponent();
             console.log("connection established");
             console.log(message_obj);
             player_number = message_obj["body"]["player_num"]
@@ -426,6 +471,7 @@
             console.log("opponent disconnected");
             console.log(message_obj);
             player_number = -1;
+            openModal();
         }
 
     });
@@ -442,9 +488,12 @@
     //Call if data needs to be sent to server
     function sendServerMessage(msg) {
         //console.log(document.getElementById('message-input').value);
-        ws.send("s" + JSON.stringify({ message: msg }));
+        ws.send("s" + JSON.stringify(msg));
         //ws.send(.toString());
     }
+
+
+    
 </script>
 
 
