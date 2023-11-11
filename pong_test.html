@@ -76,7 +76,7 @@
         DOWN: 40,
         LEFT: 37,
         RIGHT: 39,
-        W: 69,
+        W: 87,
         A: 65,
         S: 83,
         D: 68
@@ -482,9 +482,6 @@
     var fake_lag = 0; //(20 frames of fake latency between opponents)
     var gamestate_lag_queue = [];
 
-    var fullUrl = window.location.href;
-
-    // Get the hostname
     var hostname = window.location.hostname
     if (hostname == "")
         hostname = "localhost";
