@@ -440,7 +440,7 @@
         //(Opponents) Paddle
         if (player_number == 0) //opponent is p1, their side is right
         {
-            rightPaddle.yPos= (external_gamestate.right_paddle_y_pos) * canvas_scaling;
+            rightPaddle.yPos = (external_gamestate.right_paddle_y_pos) * canvas_scaling;
             right_paddle_y_vel = external_gamestate.right_paddle_y_vel * canvas_scaling;
         }
         else //opponent is p0, their side is left
@@ -460,8 +460,14 @@
     var fake_lag = 0;//30; //(20 frames of fake latency between opponents)
     var gamestate_lag_queue = [];
 
+    var fullUrl = window.location.href;
 
-    const ws = new WebSocket("ws://localhost:8080");
+    // Get the hostname
+    var hostname = window.location.hostname
+    if (hostname == "")
+        hostname = "localhost";
+
+    const ws = new WebSocket(`ws://${hostname}:8080`);
     ws.addEventListener("open", (event) => {
         ws.binaryType = "arraybuffer";
         findOpponent();
