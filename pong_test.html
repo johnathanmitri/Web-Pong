@@ -81,6 +81,19 @@
         S: 83,
         D: 68
     };
+    const keyStates = 
+    {
+        up: false,
+        down: false
+        /*UP: false,
+        DOWN: false,
+        LEFT: false,
+        RIGHT: false,
+        W: false,
+        A: false,
+        S: false,
+        D: false*/
+    }
 
     //Initialize Canvas proportional to loaded screensize
     //Scale components by canvas size (relative to default height 996px)
@@ -176,14 +189,19 @@
 
         //Compute Physics for Local Player Only
 
-        myPaddle.yPos+= myPaddle.yVel * time_scaling;
+        //myPaddle.yPos+= myPaddle.yVel * time_scaling;
+
+        if (keyStates.up)
+            myPaddle.yPos -= paddleSpeed*time_scaling;
+        if (keyStates.down)
+            myPaddle.yPos += paddleSpeed*time_scaling;
 
         // prevent paddles from going through walls
-        if (myPaddle.yPos< thickness) {
-            myPaddle.yPos= thickness;
+        if (myPaddle.yPos < thickness) {
+            myPaddle.yPos = thickness;
         }
-        else if (myPaddle.yPos> maxPaddleY) {
-            myPaddle.yPos= maxPaddleY;
+        else if (myPaddle.yPos > maxPaddleY) {
+            myPaddle.yPos = maxPaddleY;
         }
 
 
@@ -297,20 +315,36 @@
 <script>
     // Set Paddle Velocity > 0 if a key is pressed
     document.addEventListener('keydown', function (e) {
-        // up arrow key
-        if (e.which === Key.UP || e.which === Key.W) {
-            myPaddle.yVel = -paddleSpeed;
-        }
-        // down arrow key
-        else if (e.which === Key.DOWN || e.which == Key.S) {
-            myPaddle.yVel = paddleSpeed;
+        if (!e.repeat) {
+
+            // up arrow key
+            if (e.which === Key.UP || e.which === Key.W) {
+                //myPaddle.yVel-=paddleSpeed;
+                keyStates.up = true;
+            }
+            // down arrow key
+            else if (e.which === Key.DOWN || e.which == Key.S) {
+                keyStates.down = true;
+                //myPaddle.yVel+=paddleSpeed;
+            }
+            console.log("KEY DOWN !!");
         }
     });
 
     // Set Paddle Velocity == 0 if pressed key is letgo
     document.addEventListener('keyup', function (e) {
-        if (e.which === Key.UP || e.which === Key.DOWN || e.which === Key.W || e.which === Key.S) {
-            myPaddle.yVel = 0;
+        if (!e.repeat) {
+
+            if (e.which === Key.UP || e.which === Key.W) {
+                //myPaddle.yVel+=paddleSpeed;
+                keyStates.up = false;
+            }
+            // down arrow key
+            else if (e.which === Key.DOWN || e.which == Key.S) {
+                keyStates.down = false;
+                //myPaddle.yVel-=paddleSpeed;
+            }
+            console.log("KEY UP !!");
         }
 
     });
