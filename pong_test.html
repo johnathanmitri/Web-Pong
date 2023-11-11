@@ -49,7 +49,8 @@
     var player_number = 0;
     var ball_in_localplayer_court = false;
     var localplayer_paddle_collision_this_frame = false;
-    var opponent_scored = false;
+    var ball_reset_complete = false;
+    var opponent_scored = false; 
 
     //Information about gameplay elements from opponent(s)
     var most_recent_external_gamestate = null;
@@ -201,27 +202,22 @@
             //Also ensure that we are the ones in control of the ball (otherwise it is the opponents job to reset if they got scored on)
         if ((ball.x < 0 || ball.x > canvas.width) && !ball.resetting && ball_in_localplayer_court) {
             ball.resetting = true;
+            opponent_scored = true;
 
             setTimeout(() => {
                 ball.resetting = false;
+                
+                ball_reset_complete = true; //gamestate that ball has repositioned and reset is complete
 
                 //Determine new ball trajectory
                 ball.x = canvas.width / 2;
                 ball.y = canvas.height / 2;
+
                 //add randomness factor to ball velocity
                 //TODO: Ball always has downwards vertical velocity when reset - will want to randomize that 
                 // vertical_directional_scaling = Math.random()*ballSpeed/2 //Larger = More velocity in the vertical component
                 // ball.dy = ballSpeed/2 + vertical_directional_scaling; //Vertical velocity 50-100% of normal
                 // ball.dx = ballSpeed/2 + (1-vertical_directional_scaling) //Horizontal velocity is inverse-proportional to change in vertical velocity
-
-                //Let opponent knows to update ball position from our input
-                console.log("ball resettiing");
-                opponent_scored = true;
-                local_gamestate = getGamestate(player_number);
-                sendClientMessage({
-                    "trigger": "external_gamestate",
-                    "body": local_gamestate
-                });
 
             }, 500);
         }
@@ -249,16 +245,26 @@
         }
 
 
+
     //Send local updates (gamestate to opponent)
-        local_gamestate = getGamestate(player_number);
+        if (ball_reset_complete == true) //send instance of the game with the updated ball reset position
+        {
+            local_gamestate = getGamestate(player_number);
+            ball_reset_complete = false;
+        }
+        else{
+            local_gamestate = getGamestate(player_number);
+        }
+
         sendClientMessage({
             "trigger": "external_gamestate",
             "body": local_gamestate
         });
+
                     
 
     //Handle external gamestate (gamestate from opponent)
-        if (most_recent_external_gamestate != null){  //if are hitting the ball, ignore what the opponent is telling us. 
+        if (most_recent_external_gamestate != null){ 
             handleExternalGamestate(most_recent_external_gamestate);
             most_recent_external_gamestate = null; 
         }
@@ -360,8 +366,10 @@
                     //ball x,y abs velocity
                     ball_dy: ball.dy / canvas_scaling,
                     ball_dx: ball.dx / canvas_scaling,
+                    //ball was reset
+                    ball_has_reset: ball_reset_complete,
                     //scoring event
-                    local_scored : opponent_scored
+                    local_scored: opponent_scored,
                 }
                 break;
             case 1:
@@ -378,8 +386,10 @@
                     //ball x,y abs velocity
                     ball_dy: ball.dy / canvas_scaling,
                     ball_dx: ball.dx / canvas_scaling,
+                    //ball was reset
+                    ball_has_reset: ball_reset_complete,
                     //scoring event
-                    local_scored : opponent_scored
+                    local_scored: opponent_scored,
                 }
                 break;
             default:
@@ -398,8 +408,6 @@
     {
         //Only modify state of ball when a collision has occurred from opponent or ball is resetting on opponents side due to scoring on them
             //otherwise, render game logic as normal, but always update opponents paddle
-            //TODO: Only check opponents side for collisions, not both sides
-                //requires determining which side the opponent (and which side is local player)
         if (external_gamestate.opponent_paddle_ball_collision == true)
         {
             console.log("(opposing) collision occurred, render based on opponents gamestate");
@@ -413,9 +421,10 @@
             ball.dy = external_gamestate.ball_dy * canvas_scaling;
             ball_in_localplayer_court = true; // Opponent hit ball towards local player
         }
-        else if (external_gamestate.local_scored == true)
+        else if (external_gamestate.ball_has_reset == true)
         {
-            console.log("we scored against opponent, render based on opponent's ball reset position; they still have control of ball");
+            console.log("Ball reset triggered; Most likely due to scoring"
+            + "\nrender based on opponent's ball reset position; they still have control of ball"); 
             
         //Modify local gamestate to match incoming gamestate from opponent
         //(Remember to scale by local canvas size)
@@ -426,9 +435,9 @@
             ball.dy = external_gamestate.ball_dy * canvas_scaling;
             ball_in_localplayer_court = false; //Opponent still has ball
         }
-        else{
-            console.log("retain gamestate, but update paddle always");
-        }
+
+
+        console.log("retain gamestate, but update paddle always");
 
         //(Opponents) Paddle
         if (player_number == 0) //opponent is p1, their side is right
@@ -442,6 +451,12 @@
             left_paddle_dy = external_gamestate.left_paddle_dy * canvas_scaling;
         }
 
+        //TODO: HANDLE SCORING EVENT HERE
+        if (external_gamestate.local_scored){ 
+                                              //Triggered whenenever we score, not when we get scored on 
+            console.log("We just scored on opponent; (track our score)");
+        }
+
     }
 
 
@@ -450,7 +465,7 @@
 
 <!-- WEBSOCKET MESSAGE HANDLING -->
 <script>
-    var fake_lag = 30; //(20 frames of fake latency between opponents)
+    var fake_lag = 0; //(20 frames of fake latency between opponents)
     var gamestate_lag_queue = [];
 
 
@@ -473,7 +488,9 @@
             if (gamestate_lag_queue.length >= fake_lag){
                 most_recent_external_gamestate = gamestate_lag_queue.shift();
             }
-            // console.log(message_obj["body"]);
+            if (message_obj["debug_message"]){
+                console.log(message_obj["debug_message"]);
+            }
             // most_recent_external_gamestate = message_obj["body"]
         }
         //If message is connection established
