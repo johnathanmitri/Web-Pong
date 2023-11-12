@@ -395,7 +395,6 @@
         context.clearRect(0, 0, canvas.width, canvas.height);
 
         // draw paddles
-
         context.fillStyle = 'white';
         context.fillRect(leftPaddle.xPos, leftPaddle.yPos, leftPaddle.width, leftPaddle.height);
         context.fillRect(rightPaddle.xPos, rightPaddle.yPos, rightPaddle.width, rightPaddle.height);
@@ -403,16 +402,7 @@
         // draw ball
         context.fillRect(ball.xPos, ball.yPos, ball.width, ball.height);
 
-        // draw walls
-        context.fillStyle = 'lightgrey';
-        context.fillRect(0, 0, canvas.width, thickness);
-        context.fillRect(0, canvas.height - thickness, canvas.width, canvas.height);
-
-        // draw dotted line down the middle
-        for (let i = thickness; i < canvas.height - thickness; i += thickness * 2) {
-            context.fillRect(canvas.width / 2 - thickness / 4, i, thickness / 2, thickness);
-        }
-
+        // draw score
         context.font = "48px serif";
 
         var leftScore, rightScore;
@@ -423,14 +413,23 @@
             leftScore = score.opponent;
             rightScore = score.me;
         }
-        
+
         const leftTextWidth = context.measureText(leftScore.toString()).width;
         const rightTextWidth = context.measureText(rightScore.toString()).width;
-        // Calculate the starting point to center the text
-        //const startX = x - textWidth / 2;
-        //const startY = y;
+
         context.fillText(leftScore, canvas.width / 2 - thickness*5 - leftTextWidth/2, thickness*4);
         context.fillText(rightScore, canvas.width / 2 + thickness*5 - rightTextWidth/2, thickness*4);
+
+        // draw walls
+        context.fillRect(0, 0, canvas.width, thickness);
+        context.fillRect(0, canvas.height - thickness, canvas.width, canvas.height);
+
+        // draw dotted line down the middle
+        for (let i = thickness; i < canvas.height - thickness; i += thickness * 2) {
+            context.fillRect(canvas.width / 2 - thickness / 4, i, thickness / 2, thickness);
+        }
+
+
 
 
     //Send local updates (gamestate to opponent)
@@ -458,19 +457,16 @@
 
 <!-- Handle User Input -->
 <script>
-    // Set Paddle Velocity > 0 if a key is pressed
     document.addEventListener('keydown', function (e) {
         if (!e.repeat) {
 
             // up arrow key
             if (e.which === Key.UP || e.which === Key.W) {
-                //myPaddle.yVel-=paddleSpeed;
                 keyStates.up = true;
             }
             // down arrow key
             else if (e.which === Key.DOWN || e.which == Key.S) {
                 keyStates.down = true;
-                //myPaddle.yVel+=paddleSpeed;
             }
             console.log("KEY DOWN !!");
         }
@@ -481,13 +477,11 @@
         if (!e.repeat) {
 
             if (e.which === Key.UP || e.which === Key.W) {
-                //myPaddle.yVel+=paddleSpeed;
                 keyStates.up = false;
             }
             // down arrow key
             else if (e.which === Key.DOWN || e.which == Key.S) {
                 keyStates.down = false;
-                //myPaddle.yVel-=paddleSpeed;
             }
             console.log("KEY UP !!");
         }
