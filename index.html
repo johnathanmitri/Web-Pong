@@ -209,6 +209,12 @@
         D: false*/
     }
 
+    const score =
+    {
+        me: 0,
+        opponent: 0
+    };
+
     //Initialize Canvas proportional to loaded screensize
     //Scale components by canvas size (relative to default height 996px)
     canvas_scaling = window.innerHeight / 996;
@@ -356,7 +362,7 @@
         if ((ball.xPos < 0 || ball.xPos > canvas.width) && !ball.resetting && ball_in_localplayer_court) {
             ball.resetting = true;
             opponent_scored = true;
-
+            score.opponent++;
             setTimeout(() => {
                 ball.resetting = false;
                 
@@ -397,6 +403,24 @@
             context.fillRect(canvas.width / 2 - thickness / 4, i, thickness / 2, thickness);
         }
 
+        context.font = "48px serif";
+
+        var leftScore, rightScore;
+        if (player_number == 0) {
+            leftScore = score.me;
+            rightScore = score.opponent;
+        } else {
+            leftScore = score.opponent;
+            rightScore = score.me;
+        }
+        
+        const leftTextWidth = context.measureText(leftScore.toString()).width;
+        const rightTextWidth = context.measureText(rightScore.toString()).width;
+        // Calculate the starting point to center the text
+        //const startX = x - textWidth / 2;
+        //const startY = y;
+        context.fillText(leftScore, canvas.width / 2 - thickness*5 - leftTextWidth/2, thickness*4);
+        context.fillText(rightScore, canvas.width / 2 + thickness*5 - rightTextWidth/2, thickness*4);
 
 
     //Send local updates (gamestate to opponent)
@@ -569,6 +593,7 @@
         if (external_gamestate.local_scored){ 
                                               //Triggered whenenever we score, not when we get scored on 
             console.log("We just scored on opponent; (track our score)");
+            score.me++;
         }
 
     }
