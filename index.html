@@ -179,6 +179,11 @@
         document.getElementById("findOpponentBtn").style.display = "none";
         document.getElementById("searchingMsg").style.display = "initial";
 
+        score.me = 0;
+        score.opponent = 0;
+        leftPaddle.yPos = (canvas.height / 2) - (paddleHeight / 2);
+        rightPaddle.yPos = (canvas.height / 2) - (paddleHeight / 2);
+
         sendServerMessage({
             "trigger": "find_opponent"
         });
