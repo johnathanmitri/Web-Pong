@@ -35,12 +35,69 @@
             border-radius: 4px;
             cursor: pointer;
         }
+
+        .centered-div {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        #chat {
+            position: fixed;
+            top: 50%;
+            left: 88%; /* Adjust left position as desired */
+            transform: translate(-50%, -50%);
+            width: 20%; /* Adjust width as desired */
+            height: 50%; /* Adjust height as desired */
+            display: flex;
+            flex-direction: column;
+        }
+        #chat h2{
+            color: white;
+            margin-bottom: 0;
+        }
+        #chatMessages {
+            background-color: rgb(71, 71, 71);
+            border: 1px solid #ccc;
+            padding: 10px;
+            height: 100%; 
+            flex-grow: 1; /* Take up the remaining vertical space */
+            box-sizing: border-box; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: white;
+        }
+        #input {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+        }
+        #chatInput {
+            width: 80%;
+            max-height: 8em; /* Set the maximum height to approximately 3 lines */
+            height: 3em;
+            padding: 10px;
+            resize: vertical;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 5px; 
+        }
+        #sendButton {
+            width:20%;
+            padding: 10px;
+            box-sizing: border-box;
+            margin-left: 5px; /* Adjust the margin as needed */
+            background-color: rgb(134, 134, 134);
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
     </style>
 </head>
 
 <body>
     <!-- TODO: Dynamic Canvas Sizing -->
-    <div id="canvas-container">
+    <div id="canvas-container" class="centered-div">
     </div>
 
     <div id="modal">
@@ -48,11 +105,45 @@
         <button id="findOpponentBtn" onclick="findOpponent()">Find New Opponent</button>
         <h2 style="font-family: 'Arial', sans-serif;" id="searchingMsg"> Searching for Opponent...</h2>
     </div>
+
+
+    <div id="chat">
+        <h2>Chat:</h2>
+        <p id="chatMessages" style="margin-top: 0; max-height: 100%; ">
+            <strong>John: </strong> Hello <br>
+            <strong>Joe:</strong> Hi!
+        </p>
+        <div id="input">
+            <textarea id="chatInput" placeholder="Send a message..." onkeydown="chatKeyPressed(event);"></textarea>
+            <button id="sendButton" onclick="sendChatMessage()">Send</button>
+        </div>
+    </div>
+
+
     
 </body>
 
 <!-- Define Basic Pong Elements -->
 <script>
+    function chatKeyPressed(event) {
+        if (event.key === 'Enter' && !event.shiftKey) {
+          event.preventDefault(); // Prevent newline in textarea
+          sendChatMessage();
+        }
+    }
+
+    function sendChatMessage()
+    {
+        //console.log("Send msg");
+        sendClientMessage({
+            "trigger": "chat_message_recieved",
+            "msg": document.getElementById("chatInput").textContent
+        });
+
+        document.getElementById("chatInput").textContent = "";
+
+    }
+
     function openModal() {
         document.getElementById("modal").style.display = "block";
         document.getElementById("findOpponentBtn").style.display = "initial";
@@ -524,6 +615,9 @@
             console.log(message_obj);
             player_number = -1;
             openModal();
+        }
+        else if (message_obj["trigger"] == "chat_message_recieved") {
+            
         }
 
     });
