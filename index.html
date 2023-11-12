@@ -43,6 +43,7 @@
             transform: translate(-50%, -50%);
         }
         #chat {
+            /*visibility:hidden;*/
             position: fixed;
             top: 50%;
             left: 88%; /* Adjust left position as desired */
@@ -227,9 +228,10 @@
     const thickness = 15 * canvas_scaling;
     const paddleHeight = thickness * 7; // 5 is default 
     const maxPaddleY = canvas.height - thickness - paddleHeight;
+    const MAXBOUNCEANGLE = 50;
 
     var paddleSpeed = 6 * canvas_scaling; // 6 is default
-    var ballSpeed = 6 * canvas_scaling; // 6 is default
+    var ballSpeed = 9 * canvas_scaling; // 6 is default
 
     //Information about gameplay elements from opponent(s)
     var most_recent_external_gamestate = null;
@@ -237,8 +239,8 @@
     const ball = {
         xPos: canvas.width / 2, // middle of the board
         yPos: canvas.height / 2,
-        xVel: ballSpeed,
-        yVel: -ballSpeed,
+        xVel: Math.cos(45 * Math.PI / 180) * ballSpeed,
+        yVel: Math.sin(45 * Math.PI / 180) * ballSpeed,
         width: thickness,
         height: thickness,
         
@@ -330,15 +332,23 @@
         // check to see if ball collides with paddle. if they do change x velocity
         if (collides(ball, myPaddle)) {
             localplayer_paddle_collision_this_frame = true;
-            ball.xVel *= -1;
+            //ball.xVel *= -1;
+            var relativeIntersectY = (myPaddle.yPos+(paddleHeight/2)) - ball.yPos;
+            var normalizedRelativeIntersectionY = (relativeIntersectY/(paddleHeight/2));
+            var bounceAngle = normalizedRelativeIntersectionY * (MAXBOUNCEANGLE * (Math.PI / 180));
+
+            ball.xVel = Math.abs(ballSpeed*Math.cos(bounceAngle));
+            if (player_number == 1) // if right paddle
+                ball.xVel = -ball.xVel;
+            ball.yVel = -ballSpeed*Math.sin(bounceAngle);
 
             // move ball next to the paddle otherwise the collision will happen again
             // in the next frame
             ball.xPos = myPaddle.xPos;
             if (player_number == 0)
-                ball.xPos += myPaddle.width;
+                ball.xPos = myPaddle.xPos + myPaddle.width*1.5;
             else
-                ball.xPos -= myPaddle.width;
+                ball.xPos = myPaddle.xPos - myPaddle.width*0.5 - ball.width; 
         }
 
         //Handle Ball Movement
