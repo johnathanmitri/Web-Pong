@@ -65,6 +65,8 @@
             box-sizing: border-box; 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             color: white;
+            overflow-y: auto; 
+            overflow-wrap: break-word;
         }
         #input {
             display: flex;
@@ -78,6 +80,7 @@
             padding: 10px;
             resize: vertical;
             box-sizing: border-box;
+            resize: none;
             border: 1px solid #ccc;
             border-radius: 5px; 
         }
@@ -110,8 +113,6 @@
     <div id="chat">
         <h2>Chat:</h2>
         <p id="chatMessages" style="margin-top: 0; max-height: 100%; ">
-            <strong>John: </strong> Hello <br>
-            <strong>Joe:</strong> Hi!
         </p>
         <div id="input">
             <textarea id="chatInput" placeholder="Send a message..." onkeydown="chatKeyPressed(event);"></textarea>
@@ -132,15 +133,37 @@
         }
     }
 
+    function appendMessage(name, message)
+    {
+        var nameElement = document.createElement("strong");
+        nameElement.textContent = name + ": ";
+        var messageNode = document.createTextNode(message);
+        var lineBreak = document.createElement("br");
+        var chatMessages = document.getElementById("chatMessages");
+        chatMessages.appendChild(nameElement);
+        chatMessages.appendChild(messageNode);
+        chatMessages.appendChild(lineBreak);
+        // auto scroll
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
     function sendChatMessage()
     {
         //console.log("Send msg");
+        msg = document.getElementById("chatInput").value;
+        if (msg == "")
+            return;
+        document.getElementById("chatInput").value = "";
+
+        appendMessage("Me", msg);
+
+
         sendClientMessage({
             "trigger": "chat_message_recieved",
-            "msg": document.getElementById("chatInput").textContent
+            "msg": msg
         });
 
-        document.getElementById("chatInput").textContent = "";
+        
 
     }
 
@@ -617,7 +640,8 @@
             openModal();
         }
         else if (message_obj["trigger"] == "chat_message_recieved") {
-            
+            console.log("Message recieved: " +message_obj["msg"]);
+            appendMessage("Opponent", message_obj["msg"]);
         }
 
     });
