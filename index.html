@@ -45,11 +45,12 @@
         #chat {
             /*visibility:hidden;*/
             position: fixed;
+            visibility: hidden;
             top: 50%;
-            left: 88%; /* Adjust left position as desired */
+            left: 88%; 
             transform: translate(-50%, -50%);
-            width: 20%; /* Adjust width as desired */
-            height: 50%; /* Adjust height as desired */
+            width: 20%; 
+            height: 50%; 
             display: flex;
             flex-direction: column;
         }
@@ -89,7 +90,7 @@
             width:20%;
             padding: 10px;
             box-sizing: border-box;
-            margin-left: 5px; /* Adjust the margin as needed */
+            margin-left: 5px; 
             background-color: rgb(134, 134, 134);
             color: #fff;
             border: none;
@@ -190,6 +191,8 @@
     }
     function foundOpponent() {
         document.getElementById("modal").style.display = "none";
+        document.getElementById("chatMessages").innerHTML = "";
+        document.getElementById("chat").style.visibility = "visible";
     }
     const Key = {
         UP: 38,
