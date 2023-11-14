@@ -101,6 +101,7 @@
 </head>
 
 <body>
+
     <!-- TODO: Dynamic Canvas Sizing -->
     <div id="canvas-container" class="centered-div">
     </div>
@@ -119,12 +120,36 @@
         <div id="input">
             <textarea id="chatInput" placeholder="Send a message..." onkeydown="chatKeyPressed(event);"></textarea>
             <button id="sendButton" onclick="sendChatMessage()">Send</button>
+            <button onclick="togglePauseGame()">test button</button>
         </div>
     </div>
 
 
     
 </body>
+
+<!-- Gamemode Toggle Flags -->
+<script>
+    var locally_check_opponent_collisions = true;
+    var pause_game_flag = false;
+    function toggleOppCollisions(){
+        if (locally_check_opponent_collisions){
+            locally_check_opponent_collisions = false;
+        }
+        else {
+            locally_check_opponent_collisions = true;
+        }
+    }
+    function togglePauseGame(){
+        if (pause_game_flag){
+            pause_game_flag = false;
+            requestAnimationFrame(renderFrame);
+        }
+        else {
+            pause_game_flag = true;
+        }
+    }
+</script>
 
 <!-- Define Basic Pong Elements -->
 <script>
@@ -234,7 +259,7 @@
 
     //Initialize component attributes
     const thickness = 15 * canvas_scaling;
-    const paddleHeight = thickness * 7; // 5 is default 
+    const paddleHeight = thickness * 33; // 5 is default 
     const maxPaddleY = canvas.height - thickness - paddleHeight;
     const MAXBOUNCEANGLE = 50;
 
@@ -279,13 +304,13 @@
     var opponent_scored = false;
     var ball_reset_complete = false;
     var myPaddle = null;
+    var opponentPaddle = null;
     
 
 </script>
 
 <!-- Handle Gameplay Physics Render Loop -->
 <script>
-
 
     var last_rendered_timestamp = 0;
     const refresh_rate = 60;
@@ -297,11 +322,45 @@
             rect1.yPos + rect1.height > rect2.yPos;
     }
 
+    //paddle_of_richochet: which paddle the ball has richocheted off
+    //ball_x/y_vel_modifiers: optional modifiers to multiply to ball velocity after richocheting the ball
+        //(defaults = 1)
+    function handlePaddleBallCollision(paddle_of_richochet, ball_x_vel_modifier=1, ball_y_vel_modifier=1)
+    {
+    //Obtain richochet angle based on hit location on paddle
+        var relativeIntersectY = (paddle_of_richochet.yPos+(paddleHeight/2)) - ball.yPos;
+        var normalizedRelativeIntersectionY = (relativeIntersectY/(paddleHeight/2));
+        var bounceAngle = normalizedRelativeIntersectionY * (MAXBOUNCEANGLE * (Math.PI / 180));
+
+    //determine reflect "xVel" direction relative to which way it was originally going
+        var xVel_ball_reflect_direction = 1; //sending ball in positive "x" direction
+        if (Math.sign(ball.xVel) == 1){
+            xVel_ball_reflect_direction = -1; //sending ball in negative "x" direction
+        }
+        ball.xVel = Math.abs(ballSpeed*Math.cos(bounceAngle)) * xVel_ball_reflect_direction;
+        ball.yVel = -ballSpeed*Math.sin(bounceAngle);
+
+    // move ball next to the paddle otherwise the collision will happen again in the next frame
+        //use x-velocity to determine which direction to place the ball relative to the paddle
+            //(positive => place to right, negative => place to left)
+        ball.xPos = paddle_of_richochet.xPos;
+        if (xVel_ball_reflect_direction == 1)
+            ball.xPos = paddle_of_richochet.xPos + paddle_of_richochet.width*1.5;
+        else if (xVel_ball_reflect_direction == -1)
+            ball.xPos = paddle_of_richochet.xPos - paddle_of_richochet.width*0.5 - ball.width;
+    
+    //Lastly: apply optional ball velocity modifiers
+        ball.xVel = ball.xVel * ball_x_vel_modifier;
+        ball.yVel = ball.yVel * ball_y_vel_modifier;
+    }
+
     function renderFrame(cur_time) {
         if (player_number == -1)
             return;
 
-        requestAnimationFrame(renderFrame); //prepare render of next frame as soon as next refresh occurs
+        if (!pause_game_flag){
+            requestAnimationFrame(renderFrame); //prepare render of next frame as soon as next refresh occurs
+        }
 
         //New frame, any existing collision or scores has been resolved already 
         localplayer_paddle_collision_this_frame = false;
@@ -337,26 +396,51 @@
 
 
         //Handle Ball-Paddle Collision on this frame
-        // check to see if ball collides with paddle. if they do change x velocity
-        if (collides(ball, myPaddle)) {
-            localplayer_paddle_collision_this_frame = true;
-            //ball.xVel *= -1;
-            var relativeIntersectY = (myPaddle.yPos+(paddleHeight/2)) - ball.yPos;
-            var normalizedRelativeIntersectionY = (relativeIntersectY/(paddleHeight/2));
-            var bounceAngle = normalizedRelativeIntersectionY * (MAXBOUNCEANGLE * (Math.PI / 180));
+        if (locally_check_opponent_collisions)
+        {
+            //Ball can only collide with local paddle "myPaddle" if the ball is in local court
+                //if not in our court, we are checking for opponent collision 
+                //(reduce collision check computation to only 1 paddle per frame)
+            if (ball_in_localplayer_court && collides(ball, myPaddle))
+            {
+                console.log("collision occur");
+                localplayer_paddle_collision_this_frame = true;
+                handlePaddleBallCollision(myPaddle);
+    
+            }
+            else if (collides(ball, opponentPaddle))
+            {
+                console.log("saw collision on opponent paddle");
+                handlePaddleBallCollision(opponentPaddle, 1, 1); 
+                    //slow the ball a little bit so we can account for lag 
+                    //that way when opponent confirms they hit to us, the offset isn't as jarring
+            }
+        }
+        else //use previous no local check for opponent collisions
+        {
+            
+                // check to see if ball collides with paddle. if they do change x velocity
+            if (collides(ball, myPaddle)) 
+            {
+                localplayer_paddle_collision_this_frame = true;
+                //ball.xVel *= -1;
+                var relativeIntersectY = (myPaddle.yPos+(paddleHeight/2)) - ball.yPos;
+                var normalizedRelativeIntersectionY = (relativeIntersectY/(paddleHeight/2));
+                var bounceAngle = normalizedRelativeIntersectionY * (MAXBOUNCEANGLE * (Math.PI / 180));
 
-            ball.xVel = Math.abs(ballSpeed*Math.cos(bounceAngle));
-            if (player_number == 1) // if right paddle
-                ball.xVel = -ball.xVel;
-            ball.yVel = -ballSpeed*Math.sin(bounceAngle);
+                ball.xVel = Math.abs(ballSpeed*Math.cos(bounceAngle));
+                if (player_number == 1) // if right paddle
+                    ball.xVel = -ball.xVel;
+                ball.yVel = -ballSpeed*Math.sin(bounceAngle);
 
-            // move ball next to the paddle otherwise the collision will happen again
-            // in the next frame
-            ball.xPos = myPaddle.xPos;
-            if (player_number == 0)
-                ball.xPos = myPaddle.xPos + myPaddle.width*1.5;
-            else
-                ball.xPos = myPaddle.xPos - myPaddle.width*0.5 - ball.width; 
+                // move ball next to the paddle otherwise the collision will happen again
+                // in the next frame
+                ball.xPos = myPaddle.xPos;
+                if (player_number == 0)
+                    ball.xPos = myPaddle.xPos + myPaddle.width*1.5;
+                else
+                    ball.xPos = myPaddle.xPos - myPaddle.width*0.5 - ball.width; 
+            }
         }
 
         //Handle Ball Movement
@@ -378,6 +462,7 @@
         // reset ball if it goes past paddle (but only if we haven't already done so)
         //Also ensure that we are the ones in control of the ball (otherwise it is the opponents job to reset if they got scored on)
         if ((ball.xPos < 0 || ball.xPos > canvas.width) && !ball.resetting && ball_in_localplayer_court) {
+            console.log("ball has passed scoreline somewhere and I had priority");
             ball.resetting = true;
             opponent_scored = true;
             score.opponent++;
@@ -476,7 +561,7 @@
             else if (e.which === Key.DOWN || e.which == Key.S) {
                 keyStates.down = true;
             }
-            console.log("KEY DOWN !!");
+            // console.log("KEY DOWN !!");
         }
     });
 
@@ -491,7 +576,7 @@
             else if (e.which === Key.DOWN || e.which == Key.S) {
                 keyStates.down = false;
             }
-            console.log("KEY UP !!");
+            // console.log("KEY UP !!");
         }
 
     });
@@ -565,8 +650,17 @@
             //Modify local gamestate to match incoming gamestate from opponent
             //(Remember to scale by local canvas size)
             //Ball
-            ball.xPos = (external_gamestate.ball_x_pos) * canvas_scaling;
-            ball.yPos = external_gamestate.ball_y_pos * canvas_scaling;
+            if ((ball.xPos < 0 + thickness*3 || ball.xPos > canvas.width - thickness*3)){
+                ball.xPos = external_gamestate.ball_x_pos * canvas_scaling;
+                ball.yPos = external_gamestate.ball_y_pos * canvas_scaling;
+                console.log("ball was locally past score line so lets not do that");
+            }
+            else {
+                ball.xPos = ((external_gamestate.ball_x_pos * canvas_scaling) + ball.xPos) /2;
+                ball.yPos = ((external_gamestate.ball_y_pos * canvas_scaling) + ball.yPos) /2;
+            }
+            // ball.xPos = external_gamestate.ball_x_pos * canvas_scaling;
+            // ball.yPos = external_gamestate.ball_y_pos * canvas_scaling;
             ball.xVel = external_gamestate.ball_x_vel * canvas_scaling;
             ball.yVel = external_gamestate.ball_y_vel * canvas_scaling;
             ball_in_localplayer_court = true; // Opponent hit ball towards local player
@@ -616,7 +710,7 @@
 
 <!-- WEBSOCKET MESSAGE HANDLING -->
 <script>
-    var fake_lag = 0; //(20 frames of fake latency between opponents)
+    var fake_lag = 10; //(20 frames of fake latency between opponents)
     var gamestate_lag_queue = [];
 
     var hostname = window.location.hostname
@@ -662,9 +756,11 @@
                 ball_in_localplayer_court = true;
 
                 myPaddle = rightPaddle; // player 1 gets right paddle
+                opponentPaddle = leftPaddle;
             }
             else {
                 myPaddle = leftPaddle; // player 0 gets left paddle
+                opponentPaddle = rightPaddle;
             }
 
             // start the game now
