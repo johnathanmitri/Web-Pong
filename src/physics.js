@@ -67,6 +67,8 @@ var last_rendered_timestamp = 0;
         last_rendered_timestamp = cur_time; //update timestamp of last rendered frame (this frame) ((would be more intuitive to put this line of code at the end of this function))
         // console.log(time_scaling);
 
+
+        
     //Compute Paddle Physics for Local Player Only
 
         if (keyStates.up)
@@ -170,10 +172,23 @@ var last_rendered_timestamp = 0;
         context.clearRect(0, 0, canvas.width, canvas.height);
 
         // draw paddles
+        if (leftPaddle === myPaddle){
+            context.fillStyle = 'yellow';
+            context.fillRect(leftPaddle.xPos, leftPaddle.yPos, leftPaddle.width, leftPaddle.height);
+            
+            context.fillStyle = 'white';
+            context.fillRect(rightPaddle.xPos, rightPaddle.yPos, rightPaddle.width, rightPaddle.height);
+        }
+        if (rightPaddle === myPaddle){
+            context.fillStyle = 'white';
+            context.fillRect(leftPaddle.xPos, leftPaddle.yPos, leftPaddle.width, leftPaddle.height);
+            
+            context.fillStyle = 'yellow';
+            context.fillRect(rightPaddle.xPos, rightPaddle.yPos, rightPaddle.width, rightPaddle.height);
+        }
+       
         context.fillStyle = 'white';
-        context.fillRect(leftPaddle.xPos, leftPaddle.yPos, leftPaddle.width, leftPaddle.height);
-        context.fillRect(rightPaddle.xPos, rightPaddle.yPos, rightPaddle.width, rightPaddle.height);
-
+        
         // draw ball
         context.fillRect(ball.xPos, ball.yPos, ball.width, ball.height);
 
@@ -226,3 +241,5 @@ var last_rendered_timestamp = 0;
             ball_in_localplayer_court = false; //we just hit the ball, pass off ball control to opponent
         }
     }
+
+

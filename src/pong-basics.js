@@ -135,6 +135,7 @@ const leftPaddle = {
     yVel: 0,
     width: thickness,
     height: paddleHeight,
+    color: 'yellow',
 };
 
 const rightPaddle = {
@@ -143,6 +144,7 @@ const rightPaddle = {
     yVel: 0,
     width: thickness,
     height: paddleHeight,
+    color: 'white',
 };
 
 //Gamestate Flags
