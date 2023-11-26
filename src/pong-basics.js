@@ -135,7 +135,7 @@ const leftPaddle = {
     yVel: 0,
     width: thickness,
     height: paddleHeight,
-    color: 'yellow',
+    color: 'white',
 };
 
 const rightPaddle = {

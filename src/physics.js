@@ -189,6 +189,18 @@ var last_rendered_timestamp = 0;
        
         context.fillStyle = 'white';
         
+        // draw text next to the player-controlled paddle
+    context.fillStyle = 'white'; // Set the text color
+    context.font = "16px Arial";
+
+    if (player_number === 0) {
+        // If player controls the left paddle
+        context.fillText("<=== You", leftPaddle.xPos + leftPaddle.width + 5, leftPaddle.yPos + leftPaddle.height / 2);
+    } else {
+        // If player controls the right paddle
+        context.fillText("You ===>", rightPaddle.xPos - 70, rightPaddle.yPos + rightPaddle.height / 2);
+    }
+        
         // draw ball
         context.fillRect(ball.xPos, ball.yPos, ball.width, ball.height);
 
