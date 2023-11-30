@@ -1,7 +1,7 @@
 # [WebPong.net](http://webpong.net/)
 <!--# Web Pong-->
 
-An online 1v1 Pong Site!
+An online Multiplayer Pong Site!
 
 Game server written in Node.js. UI written in JavaScript, HTML, and CSS.
 
