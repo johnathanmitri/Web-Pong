@@ -102,16 +102,5 @@ html,
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             text-align: center;
         }
-        @keyframes flash {
-            0%, 50%, 100% {
-              background-color: yellow;
-            }
-            25%, 75% {
-              background-color: transparent;
-            }
-          }
-          
-          .flash-yellow {
-            animation: flash 1s infinite;
-          }
+      
           
