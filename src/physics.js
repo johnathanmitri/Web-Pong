@@ -221,15 +221,14 @@ var last_rendered_timestamp = 0;
         context.fillText(leftScore, canvas.width / 2 - thickness*5 - leftTextWidth/2, thickness*4);
         context.fillText(rightScore, canvas.width / 2 + thickness*5 - rightTextWidth/2, thickness*4);
 
-        // draw walls
+        // draw roof and floor
         context.fillRect(0, 0, canvas.width, thickness);
         context.fillRect(0, canvas.height - thickness, canvas.width, canvas.height);
 
         // draw dotted line down the middle
-        for (let i = thickness; i < canvas.height - thickness; i += thickness * 2) {
+        for (let i = thickness+1; i < canvas.height - thickness; i += thickness * 2) {
             context.fillRect(canvas.width / 2 - thickness / 4, i, thickness / 2, thickness);
         }
-
 
 
 
