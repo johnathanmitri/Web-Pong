@@ -24,3 +24,39 @@ function togglePauseGame(notify_opponent=false){
         });
     }
 }
+
+//Utility Menu Logic
+/* When the user clicks on the menu button,
+toggle between hiding and showing the dropdown content */
+function toggleUtilityMenu(e) {
+    menu_item_container = document.getElementById("utilities-menu")
+    
+    //trigger came from click outside of menu button
+    if (e != null)
+    {
+        //ignore if click was actually on the menu button
+        if (!e.target.parentElement.matches(".utility-menu-btn, #utilities-container"))
+        {
+            //close if click came from outside menu
+            if (!e.target.parentElement.matches("#utilities-menu")){
+                menu_item_container.classList.remove("show");
+                window.removeEventListener("mouseup", toggleUtilityMenu);
+            }
+            //keep open if click was from inside menu
+        }
+    }
+    //trigger came from menu button itself
+    else 
+    {
+        //display menu if it is hidden
+        if (!menu_item_container.classList.contains("show")){
+            menu_item_container.classList.toggle("show");
+            window.addEventListener("mouseup", toggleUtilityMenu);
+        }
+        else
+        {
+            menu_item_container.classList.remove("show");
+            window.removeEventListener("mouseup", toggleUtilityMenu);
+        }
+    }
+}

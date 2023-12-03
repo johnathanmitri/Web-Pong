@@ -108,7 +108,7 @@ const context = canvas.getContext('2d');
 
 //Initialize component attributes
 const thickness = 15 * canvas_scaling;
-const paddleHeight = thickness * 7; // 5 is default 
+const paddleHeight = thickness * 30; // 5 is default 
 const maxPaddleY = canvas.height - thickness - paddleHeight;
 const MAXBOUNCEANGLE = 50;
 

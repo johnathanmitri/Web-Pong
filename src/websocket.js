@@ -1,6 +1,6 @@
 // websocket.js
 
-var fake_lag = 20; // (20 frames of fake latency between opponents)
+var fake_lag = 0; // (20 frames of fake latency between opponents)
 var gamestate_lag_queue = [];
 
 var hostname = window.location.hostname;
