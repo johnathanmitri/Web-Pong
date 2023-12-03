@@ -31,18 +31,21 @@ toggle between hiding and showing the dropdown content */
 function toggleUtilityMenu(e) {
     menu_item_container = document.getElementById("utilities-menu")
     
-    //trigger came from click outside of menu button
+    //trigger came from event click, not directly menu button
     if (e != null)
     {
-        //ignore if click was actually on the menu button
-        if (!e.target.parentElement.matches(".utility-menu-btn, #utilities-container"))
+        //close if click came from outside menu
+        if (e.target.parentElement == null){
+            menu_item_container.classList.remove("show");
+            window.removeEventListener("mouseup", toggleUtilityMenu);
+        }
+        //if click wasn't  on menu button and wasn't inside menu
+        else if (!e.target.parentElement.matches(".utility-menu-btn, #utilities-container") && !e.target.parentElement.matches("#utilities-menu"))
         {
-            //close if click came from outside menu
-            if (!e.target.parentElement.matches("#utilities-menu")){
-                menu_item_container.classList.remove("show");
-                window.removeEventListener("mouseup", toggleUtilityMenu);
-            }
-            //keep open if click was from inside menu
+            //close the menu
+            menu_item_container.classList.remove("show");
+            window.removeEventListener("mouseup", toggleUtilityMenu);
+            //otherwise, keep open
         }
     }
     //trigger came from menu button itself

@@ -120,8 +120,8 @@ html,
         /* The container that holds the utility menu widget*/
         #utilities-container {
             position: absolute;
-            float: right;
-            right: 0%;
+            float: left;
+            left: 0%;
             top: 0%;
         }
 
@@ -142,7 +142,6 @@ html,
         
         /* Dropdown Content (Hidden by Default) */
         .utilities-menu-content {
-            right: 0;
             display: none;
             position: absolute;
             background-color: #f1f1f1;
