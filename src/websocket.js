@@ -58,13 +58,12 @@ ws.addEventListener("message", async (event) => {
       myPaddle = leftPaddle; // player 0 gets the left paddle
       opponentPaddle = rightPaddle;
     }
-
     // start the game now
       //optional: enable pause_game_flag = true 
       //will cause animation frame to render for 1 frame only
     last_rendered_timestamp = document.timeline.currentTime; 
     requestAnimationFrame(renderFrame); //generates pong visuals
-
+    gameStartTime = Date.now();
       //start and display a countdown that runs without relying on renderFrame function
         //end of countdown => togglePauseGame(notify_opponent = false)
 

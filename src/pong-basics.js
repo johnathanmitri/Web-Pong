@@ -149,6 +149,8 @@ const rightPaddle = {
 };
 
 //Gamestate Flags
+
+var gameStartTime;
 var player_number = -1;
 var ball_in_localplayer_court = false;
 var localplayer_paddle_collision_this_frame = false;

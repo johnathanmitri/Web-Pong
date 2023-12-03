@@ -1,6 +1,6 @@
 // physics.js
-
-
+ // Stores when the game has started
+ var gameStartTime = Date.now();
 // Handle Gameplay Physics Render Loop
 var last_rendered_timestamp = 0;
     const refresh_rate = 60;
@@ -44,16 +44,15 @@ var last_rendered_timestamp = 0;
         ball.yVel = ball.yVel * ball_y_vel_modifier;
     }
 
-    // Add this variable at the beginning of your script
-    var gameStartTime = Date.now();
 
-    // Later in your code, modify the game start or the relevant event trigger to set gameStartTime
-    // For example, when the game starts:
-    gameStartTime = Date.now();
+    
+
+    
     function renderFrame(cur_time) {
-        if (player_number == -1)
+        if (player_number == -1){
             return;
-
+        }
+           
         if (!pause_game_flag){
             requestAnimationFrame(renderFrame); //prepare render of next frame as soon as next refresh occurs
         }
@@ -175,7 +174,8 @@ var last_rendered_timestamp = 0;
 
         //Handle Component Visual Render
         context.clearRect(0, 0, canvas.width, canvas.height);
-
+        
+        
         // Determine paddle color based on time elapsed
         var timeElapsed = Date.now() - gameStartTime;
         var paddleColor = timeElapsed >= 3000 ? 'white' : 'yellow';
