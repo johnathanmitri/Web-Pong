@@ -44,6 +44,12 @@ var last_rendered_timestamp = 0;
         ball.yVel = ball.yVel * ball_y_vel_modifier;
     }
 
+    // Add this variable at the beginning of your script
+    var gameStartTime = Date.now();
+
+    // Later in your code, modify the game start or the relevant event trigger to set gameStartTime
+    // For example, when the game starts:
+    gameStartTime = Date.now();
     function renderFrame(cur_time) {
         if (player_number == -1)
             return;
@@ -167,38 +173,50 @@ var last_rendered_timestamp = 0;
         }
 
 
-    //Handle Component Visual Render
+        //Handle Component Visual Render
         context.clearRect(0, 0, canvas.width, canvas.height);
 
-        // draw paddles
-        if (leftPaddle === myPaddle){
-            context.fillStyle = 'yellow';
+        // Determine paddle color based on time elapsed
+        var timeElapsed = Date.now() - gameStartTime;
+        var paddleColor = timeElapsed >= 3000 ? 'white' : 'yellow';
+        if (player_number === 0) {
+            // If player controls the left paddle
+            var paddleText = timeElapsed >= 3000 ? '' : '<=== You';
+        } else {
+            // If player controls the right paddle
+            var paddleText = timeElapsed >= 3000 ? '' : 'You ===>';
+        }
+        
+
+        // Draw paddles with the determined color
+        if (leftPaddle === myPaddle) {
+            context.fillStyle = paddleColor;
             context.fillRect(leftPaddle.xPos, leftPaddle.yPos, leftPaddle.width, leftPaddle.height);
-            
+
             context.fillStyle = 'white';
             context.fillRect(rightPaddle.xPos, rightPaddle.yPos, rightPaddle.width, rightPaddle.height);
         }
-        if (rightPaddle === myPaddle){
+        if (rightPaddle === myPaddle) {
             context.fillStyle = 'white';
             context.fillRect(leftPaddle.xPos, leftPaddle.yPos, leftPaddle.width, leftPaddle.height);
-            
-            context.fillStyle = 'yellow';
+
+            context.fillStyle = paddleColor;
             context.fillRect(rightPaddle.xPos, rightPaddle.yPos, rightPaddle.width, rightPaddle.height);
         }
        
         context.fillStyle = 'white';
         
         // draw text next to the player-controlled paddle
-    context.fillStyle = 'white'; // Set the text color
-    context.font = "16px Arial";
+        context.fillStyle = 'white'; // Set the text color
+        context.font = "16px Arial";
 
-    if (player_number === 0) {
-        // If player controls the left paddle
-        context.fillText("<=== You", leftPaddle.xPos + leftPaddle.width + 5, leftPaddle.yPos + leftPaddle.height / 2);
-    } else {
-        // If player controls the right paddle
-        context.fillText("You ===>", rightPaddle.xPos - 70, rightPaddle.yPos + rightPaddle.height / 2);
-    }
+        if (player_number === 0) {
+            // If player controls the left paddle
+            context.fillText(paddleText, leftPaddle.xPos + leftPaddle.width + 5, leftPaddle.yPos + leftPaddle.height / 2);
+        } else {
+            // If player controls the right paddle
+            context.fillText(paddleText, rightPaddle.xPos - 70, rightPaddle.yPos + rightPaddle.height / 2);
+        }
         
         // draw ball
         context.fillRect(ball.xPos, ball.yPos, ball.width, ball.height);
