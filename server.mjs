@@ -47,14 +47,6 @@ function queuePlayer(client, options) // client is the player who is requesting 
 				return;
 			}
 		}
-		// lobby_found = clients.forEach(host_client => {
-		// 	if (host_client.lobby_number == lobby_number && host_client.inGame == false){
-		// 		console.log(host_client.lobby_number);
-		// 		connectClients(client, host_client);
-		// 		return true;
-		// 	}
-		// });
-
 		console.log("host is either in game or lobby couldn't be found");
 		client.send("s" + JSON.stringify( // "s" => message comes from server, not other client.
 		{
