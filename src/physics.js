@@ -1,6 +1,5 @@
 // physics.js
 
-
 // Handle Gameplay Physics Render Loop
 var last_rendered_timestamp = 0;
     const refresh_rate = 60;
@@ -44,13 +43,21 @@ var last_rendered_timestamp = 0;
         ball.yVel = ball.yVel * ball_y_vel_modifier;
     }
 
-    function renderFrame(cur_time) {
-        if (player_number == -1)
-            return;
 
+    
+
+    
+    function renderFrame(cur_time) {
+        if (player_number == -1){
+            return;
+        }
+           
         if (!pause_game_flag){
             requestAnimationFrame(renderFrame); //prepare render of next frame as soon as next refresh occurs
         }
+        
+         // Determine paddle color based on time elapsed
+         var timeElapsed = Date.now() - gameStartTime;
 
     //New frame, any existing collision or scores has been resolved already 
         localplayer_paddle_collision_this_frame = false;
@@ -124,81 +131,102 @@ var last_rendered_timestamp = 0;
         // }
 
 
-    //Handle Ball Movement
-        // move ball by its velocity 
-        ball.xPos += ball.xVel * time_scaling;
-        ball.yPos += ball.yVel * time_scaling;
-        // console.log("Momentary Velocity: " + ball.xVel * time_scaling / (time_since_last_rendered)); //Distance traveled / time elapsed = velocity (speed)
+        // Handle Ball Movement only if 3 seconds have passed
+        if (timeElapsed < 3000) {
+            // Calculate remaining seconds for countdown
+            var countdown = 3 - Math.floor(timeElapsed / 1000);
 
-        // prevent ball from going through walls by changing its velocity
-        if (ball.yPos < thickness) {
-            ball.yPos = thickness;
-            ball.yVel *= -1;
+            // Get the element where you want to display the countdown
+            var countdownElement = document.getElementById("countDownMessage");
+
+            // Display the countdown message with the countdown value
+            countdownElement.innerHTML = "Game Will Begin In: " + countdown;
+            countdownElement.style.display = "block";
+        }else {
+            document.getElementById("countDownMessage").style.display = "none";
+            // move ball by its velocity 
+            ball.xPos += ball.xVel * time_scaling;
+            ball.yPos += ball.yVel * time_scaling;
+
+            // prevent ball from going through walls by changing its velocity
+            if (ball.yPos < thickness) {
+                ball.yPos = thickness;
+                ball.yVel *= -1;
+            }
+            else if (ball.yPos + thickness > canvas.height - thickness) {
+                ball.yPos = canvas.height - thickness * 2;
+                ball.yVel *= -1;
+            }
+
+            //Check Scoring Condition
+            // reset ball if it goes past paddle (but only if we haven't already done so)
+            //Also ensure that we are the ones in control of the ball (otherwise it is the opponent's job to reset if they got scored on)
+            if ((ball.xPos < 0 || ball.xPos > canvas.width) && !ball.resetting && ball_in_localplayer_court) {
+                console.log("ball has passed scoreline somewhere and I had priority");
+                ball.resetting = true;
+                opponent_scored = true;
+                score.opponent++;
+                setTimeout(() => {
+                    ball.resetting = false;
+                    
+                    ball_reset_complete = true; // gamestate that ball has repositioned and reset is complete
+
+                    // Determine new ball trajectory
+                    ball.xPos = canvas.width / 2;
+                    ball.yPos = canvas.height / 2;
+                    // Randomize new ball direction and speed here if needed
+                    // Example: ball.xVel = [new velocity];
+                    //          ball.yVel = [new velocity];
+                }, 600);
+            }
         }
-        else if (ball.yPos + thickness > canvas.height - thickness) {
-            ball.yPos = canvas.height - thickness * 2;
-            ball.yVel *= -1;
-        }
 
 
-    //Check Scoring Condition
-        // reset ball if it goes past paddle (but only if we haven't already done so)
-        //Also ensure that we are the ones in control of the ball (otherwise it is the opponents job to reset if they got scored on)
-        if ((ball.xPos < 0 || ball.xPos > canvas.width) && !ball.resetting && ball_in_localplayer_court) {
-            console.log("ball has passed scoreline somewhere and I had priority");
-            ball.resetting = true;
-            opponent_scored = true;
-            score.opponent++;
-            setTimeout(() => {
-                ball.resetting = false;
-                
-                ball_reset_complete = true; //gamestate that ball has repositioned and reset is complete
 
-                //Determine new ball trajectory
-                ball.xPos = canvas.width / 2;
-                ball.yPos = canvas.height / 2;
-                //add randomness factor to ball velocity
-                //TODO: Ball always has downwards vertical velocity when reset - will want to randomize that 
-                // vertical_directional_scaling = Math.random()*ballSpeed/2 //Larger = More velocity in the vertical component
-                // ball.dy = ballSpeed/2 + vertical_directional_scaling; //Vertical velocity 50-100% of normal
-                // ball.dx = ballSpeed/2 + (1-vertical_directional_scaling) //Horizontal velocity is inverse-proportional to change in vertical velocity
-
-            }, 600);
-        }
-
-
-    //Handle Component Visual Render
+        //Handle Component Visual Render
         context.clearRect(0, 0, canvas.width, canvas.height);
+        
+        
+       // Change color of paddle after 3 seconds 
+        var paddleColor = timeElapsed >= 3000 ? 'white' : 'yellow';
+        if (player_number === 0) {
+            // If player controls the left paddle
+            var paddleText = timeElapsed >= 3000 ? '' : '<=== You';
+        } else {
+            // If player controls the right paddle
+            var paddleText = timeElapsed >= 3000 ? '' : 'You ===>';
+        }
+        
 
-        // draw paddles
-        if (leftPaddle === myPaddle){
-            context.fillStyle = 'yellow';
+        // Draw paddles with the determined color
+        if (leftPaddle === myPaddle) {
+            context.fillStyle = paddleColor;
             context.fillRect(leftPaddle.xPos, leftPaddle.yPos, leftPaddle.width, leftPaddle.height);
-            
+
             context.fillStyle = 'white';
             context.fillRect(rightPaddle.xPos, rightPaddle.yPos, rightPaddle.width, rightPaddle.height);
         }
-        if (rightPaddle === myPaddle){
+        if (rightPaddle === myPaddle) {
             context.fillStyle = 'white';
             context.fillRect(leftPaddle.xPos, leftPaddle.yPos, leftPaddle.width, leftPaddle.height);
-            
-            context.fillStyle = 'yellow';
+
+            context.fillStyle = paddleColor;
             context.fillRect(rightPaddle.xPos, rightPaddle.yPos, rightPaddle.width, rightPaddle.height);
         }
        
         context.fillStyle = 'white';
         
         // draw text next to the player-controlled paddle
-    context.fillStyle = 'white'; // Set the text color
-    context.font = "16px Arial";
+        context.fillStyle = 'white'; // Set the text color
+        context.font = "16px Arial";
 
-    if (player_number === 0) {
-        // If player controls the left paddle
-        context.fillText("<=== You", leftPaddle.xPos + leftPaddle.width + 5, leftPaddle.yPos + leftPaddle.height / 2);
-    } else {
-        // If player controls the right paddle
-        context.fillText("You ===>", rightPaddle.xPos - 70, rightPaddle.yPos + rightPaddle.height / 2);
-    }
+        if (player_number === 0) {
+            // If player controls the left paddle
+            context.fillText(paddleText, leftPaddle.xPos + leftPaddle.width + 5, leftPaddle.yPos + leftPaddle.height / 2);
+        } else {
+            // If player controls the right paddle
+            context.fillText(paddleText, rightPaddle.xPos - 70, rightPaddle.yPos + rightPaddle.height / 2);
+        }
         
         // draw ball
         context.fillRect(ball.xPos, ball.yPos, ball.width, ball.height);
