@@ -9,7 +9,6 @@ if (hostname === "") hostname = "localhost";
 const ws = new WebSocket(`ws://${hostname}:8080`);
 ws.addEventListener("open", (event) => {
   ws.binaryType = "arraybuffer";
-  findOpponent();
 });
 
 // Listening for messages coming through this websocket
@@ -69,10 +68,15 @@ ws.addEventListener("message", async (event) => {
         //end of countdown => togglePauseGame(notify_opponent = false)
 
   } else if (message_obj["trigger"] == "opponent_disconnected") {
+    document.getElementById("opponentMessage").innerHTML = message_obj["message"];
     console.log("opponent disconnected");
     console.log(message_obj);
     player_number = -1;
     openModal();
+  } else if (message_obj["trigger"] == "client_initialization") {
+    initialization_params = message_obj["body"];
+    console.log(initialization_params);
+    openModal(first_join = true, new_lobby_num = initialization_params["lobby_num"]);
   } else if (message_obj["trigger"] == "chat_message_recieved") {
     console.log("Message received: " + message_obj["msg"]);
     appendMessage("Opponent", message_obj["msg"]);

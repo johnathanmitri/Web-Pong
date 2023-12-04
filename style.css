@@ -29,6 +29,12 @@ html,
             cursor: pointer;
         }
 
+        #findOpponentBtn {
+            flex: auto;
+            display: flex;
+            width: 100%;
+        }
+
         .centered-div {
             position: fixed;
             top: 50%;

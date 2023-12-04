@@ -42,15 +42,26 @@ function sendChatMessage()
 
 }
 
-function openModal() {
+function openModal(first_join=false, new_lobby_num=null) {
     document.getElementById("modal").style.display = "block";
     document.getElementById("findOpponentBtn").style.display = "initial";
-    document.getElementById("opponentMessage").style.display = "block";
     document.getElementById("searchingMsg").style.display = "none";
+    document.getElementById("pre-game-lobby-menu-group").style.display = "block"
+    if (!first_join){
+        document.getElementById("opponentMessage").style.display = "block";
+    }
+    if (new_lobby_num != null)
+    {
+        lobby_code_elms = document.getElementsByClassName("lobby-code-label");
+        for (i = 0; i < lobby_code_elms.length; i++) {
+            lobby_code_elms[i].dataset.lobbynum = new_lobby_num;
+            lobby_code_elms[i].innerHTML = "Your Lobby Code: " + new_lobby_num;
+        }
+    }
 }
-function findOpponent() {
+function findOpponent(lobby_num = null) {
     document.getElementById("modal").style.display = "block";
-    document.getElementById("findOpponentBtn").style.display = "none";
+    document.getElementById("pre-game-lobby-menu-group").style.display = "none"
     document.getElementById("searchingMsg").style.display = "initial";
 
     score.me = 0;
@@ -58,9 +69,23 @@ function findOpponent() {
     leftPaddle.yPos = (canvas.height / 2) - (paddleHeight / 2);
     rightPaddle.yPos = (canvas.height / 2) - (paddleHeight / 2);
 
-    sendServerMessage({
-        "trigger": "find_opponent"
-    });
+    if (lobby_num != null){
+        sendServerMessage({
+            "trigger": "find_opponent",
+            "body": {
+                "lobby_num": lobby_num
+            }
+        });
+    }
+    else{
+        sendServerMessage({
+            "trigger": "find_opponent",
+        });
+    }
+}
+function findLobby(){ 
+    lobby_to_search_for = document.getElementById("lobby-num-input").value;
+    findOpponent(lobby_to_search_for);
 }
 function foundOpponent() {
     document.getElementById("modal").style.display = "none";

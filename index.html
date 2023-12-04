@@ -15,7 +15,15 @@
 
     <div id="modal">
         <p id="opponentMessage" style="display:none">Your opponent has disconnected!</p>
-        <button id="findOpponentBtn" onclick="findOpponent()">Find New Opponent</button>
+        <div id="pre-game-lobby-menu-group">
+            <button id="findOpponentBtn" onclick="findOpponent()">Find New Opponent</button>
+            <p>Or</p>
+            <div class="d-flex gap-2 w-100 justify-content-between">
+                <input id="lobby-num-input" type="text" placeholder="1234">
+                <button onclick="findLobby()">Direct Join</button>
+            </div>
+            <label class="lobby-code-label" data-lobbynum="0">Your lobby code:</label>
+        </div>
         <h2 style="font-family: 'Arial', sans-serif;" id="searchingMsg"> Searching for Opponent...</h2>
     </div>
 
