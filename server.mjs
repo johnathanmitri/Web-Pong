@@ -1,15 +1,18 @@
 import WebSocket, { WebSocketServer } from 'ws';
 import readline from 'readline';
 import { randomUUID } from 'crypto';
+import * as https from 'https';
+import * as fs from 'fs';
 
 //const server = new WebSocketServer({ port: 8080 });
 //server.binaryType = "text";
 
 const httpsServer = https.createServer({
-    cert: fs.readFileSync('/etc/pki/tls/certs/webpong.net.chain.crt'),
-    key: fs.readFileSync('/etc/pki/tls/private/webpong.net.key')
+    cert: fs.readFileSync('/home/ec2-user/chain.crt'),
+    key: fs.readFileSync('/home/ec2-user/webpong.key')
 });
-const server = new wsLibrary.WebSocketServer({ server: httpsServer });
+const server = new WebSocketServer({ server: httpsServer });
+httpsServer.listen(8080, () => { console.log(`WebSocket over TLS server is running on port 8080`) });
 server.binaryType = "text";
 
 const MAX_LOBBY_NUMBERS = 1000;
