@@ -14,7 +14,7 @@ var last_rendered_timestamp = 0;
     //paddle_of_richochet: which paddle the ball has richocheted off
     //ball_x/y_vel_modifiers: optional modifiers to multiply to ball velocity after richocheting the ball
         //(defaults = 1)
-    function handlePaddleBallCollision(paddle_of_richochet, ball_x_vel_modifier=1.05, ball_y_vel_modifier=1)
+    function handlePaddleBallCollision(paddle_of_richochet, ball_x_vel_modifier=1, ball_y_vel_modifier=1)
     {
     //Obtain richochet angle based on hit location on paddle
         var relativeIntersectY = (paddle_of_richochet.yPos+(paddleHeight/2)) - ball.yPos;
@@ -39,9 +39,8 @@ var last_rendered_timestamp = 0;
             ball.xPos = paddle_of_richochet.xPos - paddle_of_richochet.width*0.5 - ball.width;
     
     //Lastly: apply optional ball velocity modifiers
-        //ball.xVel = ball.xVel * ball_x_vel_modifier;
-        //ball.yVel = ball.yVel * ball_y_vel_modifier;
-        ballSpeed = ballSpeed * ball_x_vel_modifier; 
+        ball.xVel = ball.xVel * ball_x_vel_modifier;
+        ball.yVel = ball.yVel * ball_y_vel_modifier;
     }
 
 
@@ -98,12 +97,14 @@ var last_rendered_timestamp = 0;
             //(reduce collision check computation to only 1 paddle per frame)
         if (ball_in_localplayer_court && collides(ball, myPaddle))
         {
+            ballSpeed*=1.05;
             console.log("collision occur");
             localplayer_paddle_collision_this_frame = true;
             handlePaddleBallCollision(myPaddle);
         }
         else if (!ball_in_localplayer_court && collides(ball, opponentPaddle))
         {
+            ballSpeed*=1.05;
             console.log("saw collision on opponent paddle");
             handlePaddleBallCollision(opponentPaddle, .6, .6); //slow ball down after local opponent collision to reduce latency effect
         }
