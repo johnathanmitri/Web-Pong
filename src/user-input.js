@@ -3,22 +3,19 @@
 // Handle User Input
 document.addEventListener('keydown', function (e) {
     if (!e.repeat) {
+        let chatHasFocus = document.activeElement === document.getElementById("chatInput");
         // up arrow key
-        if (e.which === Key.UP || e.which === Key.W) {
+        if (e.which === Key.UP || (!chatHasFocus && e.which === Key.W)) {
             keyStates.up = true;
         }
         // down arrow key
-        if (document.activeElement !== document.getElementById("chatInput"))
-        {
-            if (e.which === Key.DOWN || e.which == Key.S) {
-                keyStates.down = true;
-            }
-            else if (e.which === Key.P){
-                console.log("toggle pause");
-                togglePauseGame(notify_opponent = true);
-            }
+        else if (e.which === Key.DOWN || (!chatHasFocus && e.which === Key.S)) {
+            keyStates.down = true;
         }
-        
+        else if (!chatHasFocus && e.which === Key.P){
+            console.log("toggle pause");
+            togglePauseGame(notify_opponent = true);
+        }
         // console.log("KEY DOWN !!");
     }
 });
