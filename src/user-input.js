@@ -8,13 +8,17 @@ document.addEventListener('keydown', function (e) {
             keyStates.up = true;
         }
         // down arrow key
-        else if (e.which === Key.DOWN || e.which == Key.S) {
-            keyStates.down = true;
+        if (document.activeElement !== document.getElementById("chatInput"))
+        {
+            if (e.which === Key.DOWN || e.which == Key.S) {
+                keyStates.down = true;
+            }
+            else if (e.which === Key.P){
+                console.log("toggle pause");
+                togglePauseGame(notify_opponent = true);
+            }
         }
-        else if (e.which === Key.P){
-            console.log("toggle pause");
-            togglePauseGame(notify_opponent = true);
-        }
+        
         // console.log("KEY DOWN !!");
     }
 });
