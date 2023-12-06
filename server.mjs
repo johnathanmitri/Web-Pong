@@ -2,7 +2,14 @@ import WebSocket, { WebSocketServer } from 'ws';
 import readline from 'readline';
 import { randomUUID } from 'crypto';
 
-const server = new WebSocketServer({ port: 8080 });
+//const server = new WebSocketServer({ port: 8080 });
+//server.binaryType = "text";
+
+const httpsServer = https.createServer({
+    cert: fs.readFileSync('/etc/pki/tls/certs/webpong.net.chain.crt'),
+    key: fs.readFileSync('/etc/pki/tls/private/webpong.net.key')
+});
+const server = new wsLibrary.WebSocketServer({ server: httpsServer });
 server.binaryType = "text";
 
 const MAX_LOBBY_NUMBERS = 1000;
@@ -176,6 +183,7 @@ server.on('connection', function connection(ws)
 				}*/
 			}));
 			client.partner.partner = null;
+			client.inGame = false;
 			//latestClient = client.partner;
 		}
 		else if (latestClient == client)
