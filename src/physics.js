@@ -97,14 +97,14 @@ var last_rendered_timestamp = 0;
             //(reduce collision check computation to only 1 paddle per frame)
         if (ball_in_localplayer_court && collides(ball, myPaddle))
         {
-            ballSpeed*=1.05;
+            //ballSpeed*=1.05;
             console.log("collision occur");
             localplayer_paddle_collision_this_frame = true;
             handlePaddleBallCollision(myPaddle);
         }
         else if (!ball_in_localplayer_court && collides(ball, opponentPaddle))
         {
-            ballSpeed*=1.05;
+            //ballSpeed*=1.05;
             console.log("saw collision on opponent paddle");
             handlePaddleBallCollision(opponentPaddle, .6, .6); //slow ball down after local opponent collision to reduce latency effect
         }
