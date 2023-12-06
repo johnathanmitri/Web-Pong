@@ -7,6 +7,8 @@ server.binaryType = "text";
 
 const MAX_LOBBY_NUMBERS = 1000;
 
+const clients = new Map();
+
 class Client {
 	constructor(ws) {
 		this.ws = ws;
@@ -14,7 +16,12 @@ class Client {
 		this.inGame = false;
 		//this.lookingForGame = 
 		this.partner = null;
-		this.lobby_number = Math.floor(Math.random() * MAX_LOBBY_NUMBERS);
+		do
+		{
+			this.lobby_number = Math.floor(Math.random() * MAX_LOBBY_NUMBERS);
+		}
+		while (clients.has(this.lobby_number));
+		console.log(this.lobby_number);
 	}
 	
 	send(msg)
@@ -28,25 +35,42 @@ class Client {
 // empty map 
 //const partners = new Map();
 
-const clients = new Set();
+// const clients = new Set();
+
+// key is lobby number, value is client
 
 var latestClient = null;
 
 function queuePlayer(client, options) // client is the player who is requesting to be paired
 {
-	var lobby_number = options.lobby_num || null
+	//var lobby_number = options.lobby_num || null
+	
 	//skip queue is joining direct with lobby number
-	if (lobby_number != null)
+	if (options)
 	{
-	//match client with lobby number and connect if not in a match currently
-		for (const host_client of clients)
+		let lobby_number = null;
+		if (options.lobby_num)
+			lobby_number = parseInt(options.lobby_num);
+		//match client with lobby number and connect if not in a match currently
+		/*for (const host_client of clients)
 		{
 			if (host_client.lobby_number == lobby_number && host_client.inGame == false){
 				console.log(host_client.lobby_number);
 				connectClients(client, host_client);
 				return;
 			}
+		}*/
+		if (clients.has(lobby_number))
+		{
+			let opponent = clients.get(lobby_number);
+			if (opponent.inGame == false)
+			{
+				console.log(opponent.lobby_number);
+				connectClients(client, opponent);
+				return;
+			}
 		}
+
 		console.log("host is either in game or lobby couldn't be found");
 		client.send("s" + JSON.stringify( // "s" => message comes from server, not other client.
 		{
@@ -115,7 +139,7 @@ server.on('connection', function connection(ws)
 
 	var client = new Client(ws);
 	
-	clients.add(client);
+	clients.set(client.lobby_number, client);
 	//ws.send("Hello from the server.");
 	client.send("s" + JSON.stringify( //send initialization variables to client when first connecting to server
 		{
@@ -134,7 +158,7 @@ server.on('connection', function connection(ws)
 	function closeOrError(error)
 	{
 		console.log("Client disconnected.");
-		clients.delete(client);
+		clients.delete(client.lobby_number);
 
 		//if (partners.has(ws))
 		if (client.partner != null)
