@@ -13,8 +13,6 @@ ws.addEventListener("open", (event) => {
 
 // Listening for messages coming through this websocket
 ws.addEventListener("message", async (event) => {
-  // message_raw = event.data;
-  // console.log(message_raw);
   message_obj = JSON.parse(event.data.substring(1));
 
   // If message is from opponents newest gamestate
@@ -58,13 +56,9 @@ ws.addEventListener("message", async (event) => {
       opponentPaddle = rightPaddle;
     }
     // start the game now
-      //optional: enable pause_game_flag = true 
-      //will cause animation frame to render for 1 frame only
     last_rendered_timestamp = document.timeline.currentTime; 
     requestAnimationFrame(renderFrame); //generates pong visuals
     gameStartTime = Date.now();
-      //start and display a countdown that runs without relying on renderFrame function
-        //end of countdown => togglePauseGame(notify_opponent = false)
 
   } else if (message_obj["trigger"] == "opponent_disconnected") {
     document.getElementById("opponentMessage").innerHTML = message_obj["message"];
@@ -85,14 +79,10 @@ ws.addEventListener("message", async (event) => {
 // Functions for sending messages to websocket
 // Call if data needs to be sent to the connected client
 function sendClientMessage(msg) {
-  // console.log(document.getElementById('message-input').value);
   ws.send("c" + JSON.stringify(msg));
-  // ws.send(.toString());
 }
 
 // Call if data needs to be sent to the server
 function sendServerMessage(msg) {
-  // console.log(document.getElementById('message-input').value);
   ws.send("s" + JSON.stringify(msg));
-  // ws.send(.toString());
 }

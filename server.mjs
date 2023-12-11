@@ -4,9 +4,6 @@ import { randomUUID } from 'crypto';
 import * as https from 'https';
 import * as fs from 'fs';
 
-//const server = new WebSocketServer({ port: 8080 });
-//server.binaryType = "text";
-
 const httpsServer = https.createServer({
     cert: fs.readFileSync('/home/ec2-user/chain.crt'),
     key: fs.readFileSync('/home/ec2-user/webpong.key')
@@ -42,18 +39,11 @@ class Client {
 
 
 
-// empty map 
-//const partners = new Map();
-
-// const clients = new Set();
-
-// key is lobby number, value is client
 
 var latestClient = null;
 
 function queuePlayer(client, options) // client is the player who is requesting to be paired
 {
-	//var lobby_number = options.lobby_num || null
 	
 	//skip queue is joining direct with lobby number
 	if (options)
@@ -62,14 +52,6 @@ function queuePlayer(client, options) // client is the player who is requesting 
 		if (options.lobby_num)
 			lobby_number = parseInt(options.lobby_num);
 		//match client with lobby number and connect if not in a match currently
-		/*for (const host_client of clients)
-		{
-			if (host_client.lobby_number == lobby_number && host_client.inGame == false){
-				console.log(host_client.lobby_number);
-				connectClients(client, host_client);
-				return;
-			}
-		}*/
 		if (clients.has(lobby_number))
 		{
 			let opponent = clients.get(lobby_number);
@@ -96,16 +78,9 @@ function queuePlayer(client, options) // client is the player who is requesting 
 			latestClient = client;
 		else 
 		{
-			//partners.set(latestClient, ws);  // pair these two in the hashmap. 
-			//partners.set(ws, latestClient);
-
 			//Connect both players
 			connectClients(client, latestClient);
 			latestClient = null; //drop player from queue after making connection 
-
-			// ws.send("You have been paired.");
-			// latestClient.send("You have been paired.");
-			//latestClient = null;
 		}
 	}
 }
@@ -163,7 +138,6 @@ server.on('connection', function connection(ws)
 		}
 	))
 	
-	//clients.set(ws);
 
 	function closeOrError(error)
 	{
@@ -173,17 +147,10 @@ server.on('connection', function connection(ws)
 		//if (partners.has(ws))
 		if (client.partner != null)
 		{
-			//let partner = partners.get(ws);
-
-			//partners.delete(ws);
-			//partners.delete(partner);
 			client.partner.send("s" + JSON.stringify( // "s" => message comes from server, not other client.
 			{
 				"trigger": "opponent_disconnected",
 				"message": "Your opponent has disconnected",
-				/*"body": {
-					"player_num": 0
-				}*/
 			}));
 			client.partner.partner = null;
 			client.inGame = false;

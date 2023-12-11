@@ -64,15 +64,10 @@ var last_rendered_timestamp = 0;
         opponent_scored = false;
         //Idenfity time scaling factor based on how much time has passed between frames
         //Ideal time between rendering frames should be 16.667ms or 60hz
-        //Therefore if the difference between frames is 16.667ms then the scaling factor should = 1
-        //If the difference between frames is LESS than 16.667ms, then the scaling factor should be < 1
         time_since_last_rendered = cur_time - last_rendered_timestamp
         time_scaling = (time_since_last_rendered) / (1000 * (1 / refresh_rate));
-        // console.log("Cur: "+ cur_time + " Prev:" + last_rendered_timestamp + " Diff:" + (time_since_last_rendered));
 
         last_rendered_timestamp = cur_time; //update timestamp of last rendered frame (this frame) ((would be more intuitive to put this line of code at the end of this function))
-        // console.log(time_scaling);
-
 
         
     //Compute Paddle Physics for Local Player Only
@@ -92,45 +87,17 @@ var last_rendered_timestamp = 0;
 
 
     //Handle Ball-Paddle Collision on this frame
-        //Ball can only collide with local paddle "myPaddle" if the ball is in local court
-            //if not in our court, we are checking for opponent collision 
-            //(reduce collision check computation to only 1 paddle per frame)
         if (ball_in_localplayer_court && collides(ball, myPaddle))
         {
-            //ballSpeed*=1.05;
             console.log("collision occur");
             localplayer_paddle_collision_this_frame = true;
             handlePaddleBallCollision(myPaddle);
         }
         else if (!ball_in_localplayer_court && collides(ball, opponentPaddle))
         {
-            //ballSpeed*=1.05;
             console.log("saw collision on opponent paddle");
             handlePaddleBallCollision(opponentPaddle, .6, .6); //slow ball down after local opponent collision to reduce latency effect
         }
-
-        //Legacy: no local check for opponent collisions
-        // if (collides(ball, myPaddle)) 
-        // {
-        //     localplayer_paddle_collision_this_frame = true;
-        //     //ball.xVel *= -1;
-        //     var relativeIntersectY = (myPaddle.yPos+(paddleHeight/2)) - ball.yPos;
-        //     var normalizedRelativeIntersectionY = (relativeIntersectY/(paddleHeight/2));
-        //     var bounceAngle = normalizedRelativeIntersectionY * (MAXBOUNCEANGLE * (Math.PI / 180));
-
-        //     ball.xVel = Math.abs(ballSpeed*Math.cos(bounceAngle));
-        //     if (player_number == 1) // if right paddle
-        //         ball.xVel = -ball.xVel;
-        //     ball.yVel = -ballSpeed*Math.sin(bounceAngle);
-
-        //     // move ball next to the paddle otherwise the collision will happen again
-        //     // in the next frame
-        //     ball.xPos = myPaddle.xPos;
-        //     if (player_number == 0)
-        //         ball.xPos = myPaddle.xPos + myPaddle.width*1.5;
-        //     else
-        //         ball.xPos = myPaddle.xPos - myPaddle.width*0.5 - ball.width; 
-        // }
 
 
         // Handle Ball Movement only if 3 seconds have passed
@@ -176,9 +143,6 @@ var last_rendered_timestamp = 0;
                     // Determine new ball trajectory
                     ball.xPos = canvas.width / 2;
                     ball.yPos = canvas.height / 2;
-                    // Randomize new ball direction and speed here if needed
-                    // Example: ball.xVel = [new velocity];
-                    //          ball.yVel = [new velocity];
                 }, 600);
             }
         }

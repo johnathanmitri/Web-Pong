@@ -48,7 +48,6 @@ function toggleUtilityMenu(e) {
             //otherwise, keep open
         }
     }
-    //trigger came from menu button itself
     else 
     {
         //display menu if it is hidden

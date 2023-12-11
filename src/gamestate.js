@@ -63,11 +63,8 @@ function handleExternalGamestate(external_gamestate) {
     {
         console.log("(opposing) collision occurred, render based on opponents gamestate");
 
-        //Modify local gamestate to match incoming gamestate from opponent
-        //(Remember to scale by local canvas size)
         //Ball
-            //Attempts to compensate for latency by putting ball at midpoint between seen location and recieved location
-                //Affirm that doing the above wont cause the ball to be put behind the score line
+        //Attempts to compensate for latency by putting ball at midpoint between seen location and recieved location
         if ((ball.xPos < 0 + thickness*3 || ball.xPos > canvas.width - thickness*3)){
             ball.xPos = external_gamestate.ball_x_pos * canvas_scaling;
             ball.yPos = external_gamestate.ball_y_pos * canvas_scaling;
@@ -94,7 +91,6 @@ function handleExternalGamestate(external_gamestate) {
         ball_in_localplayer_court = false; //Opponent still has ball
     }
 
-    // console.log("retain gamestate, but update paddle always");
 
     //(Opponents) Paddle
     if (player_number == 0) //opponent is p1, their side is right
