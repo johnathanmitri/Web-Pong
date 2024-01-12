@@ -24,4 +24,4 @@ jobs:
           sudo pkill node
           sudo rm -rf ~/web-pong
           sudo git clone https://github.com/johnathanmitri/Web-Pong ~/web-pong
-          sudo nohup node ~/web-pong/server.mjs > output.log 2> error.log < /dev/null &
+          sudo nohup node ~/web-pong/server.js > output.log 2> error.log < /dev/null &
