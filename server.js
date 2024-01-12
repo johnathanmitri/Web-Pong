@@ -1,12 +1,12 @@
-import WebSocket, { WebSocketServer } from 'ws';
-import readline from 'readline';
-import express from 'express';
+const WebSocketServer = require('ws').WebSocketServer;
+const readline = require('readline');
+const express = require('express');
 
 const HTTP_PORT = 80;
 const WS_PORT = 8080;
 
 const app = express();
-app.use(express.static('public'));
+app.use(express.static(__dirname + '/public'));
 app.listen(80, () => {
     console.log(`HTTP server listening on port ${HTTP_PORT}`);
 });
