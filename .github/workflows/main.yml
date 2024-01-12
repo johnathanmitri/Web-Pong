@@ -1,4 +1,4 @@
-name: Update Apache Web Folder
+name: Deploy to EC2
 
 on:
   push:
