@@ -6,7 +6,7 @@ var gamestate_lag_queue = [];
 var hostname = window.location.hostname;
 if (hostname === "") hostname = "localhost";
 
-const ws = new WebSocket(`wss://${hostname}:8080`);
+const ws = new WebSocket(`ws://${hostname}:8080`);
 ws.addEventListener("open", (event) => {
   ws.binaryType = "arraybuffer";
 });

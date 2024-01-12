@@ -16,12 +16,12 @@ jobs:
     - name: Run commands to clone the new github repository
       uses: appleboy/ssh-action@v0.1.9
       with:
-        host: groupup.pro
-        username: ec2-user
+        host: webpong.net
+        username: ubuntu
         key: ${{ secrets.KEY }}
         port: 22
         script: |
           pkill node
-          sudo rm -rf /var/www/html/CS3800-Project
-          sudo git clone https://github.com/johnathanmitri/Web-Pong /var/www/html/CS3800-Project
-          nohup node /var/www/html/CS3800-Project/server.mjs > output.log 2> error.log < /dev/null &
+          sudo rm -rf ~
+          sudo git clone https://github.com/johnathanmitri/Web-Pong ~
+          nohup node ~/server.mjs > output.log 2> error.log < /dev/null &
